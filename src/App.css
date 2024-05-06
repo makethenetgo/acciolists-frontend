@@ -36,3 +36,29 @@
     transform: rotate(360deg);
   }
 }
+
+body {
+  font-family: "Roboto", sans-serif;
+}
+
+.column-box {
+  background-color: #f0f0f0; /* Light grey background */
+  border-radius: 8px; /* Rounded corners */
+  padding: 20px; /* Padding inside the box */
+  margin-bottom: 20px; /* Space between the boxes */
+}
+
+.navbar-brand {
+  margin-left: 20px; /* Adjust as needed */
+  font-weight: bold;
+  font-size:xx-large;
+}
+
+.table-margin {
+  margin: 20px;
+}
+
+.form-spacing {
+  margin-top: 4px;
+  margin-bottom: 4px;
+}
