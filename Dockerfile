@@ -4,7 +4,7 @@ WORKDIR /app
 
 # Install dependencies using Yarn
 COPY package*.json ./
-RUN yarn install
+RUN yarn install --network-timeout 1000000
 
 # Copy the rest of your app's source code
 COPY . .
