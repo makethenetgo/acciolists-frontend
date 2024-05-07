@@ -1,5 +1,5 @@
 # Use a specific version of node
-FROM node:18 as build
+FROM node:18.20 as build
 WORKDIR /app
 
 # Install dependencies using Yarn
