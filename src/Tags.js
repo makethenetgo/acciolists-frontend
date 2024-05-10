@@ -13,14 +13,14 @@ const Tags = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-  
+
     const url = `/api/tags`; // Append your endpoint to the base URL
-  
+
     const payload = {
       name: document.getElementById('newTag').value,
       color: color
     };
-  
+
     // Make the POST request
     fetch(url, {
       method: 'POST',
@@ -30,16 +30,25 @@ const Tags = () => {
       },
       body: JSON.stringify(payload)
     })
-    .then(response => response.json())
-    .then(data => {
-      console.log('Success:', data);
-      // Additional handling could be added here, such as clearing the form or updating the UI
+    .then(response => {
+      if (response.ok) { // Check if the status code is 200-299
+        return response.json().then(data => {
+          console.log('Success:', data);
+          alert(`Success: ${data.message} ✔️`); // Use data.message if your API returns a specific message, else use a generic text
+        });
+      } else {
+        return response.json().then(data => {
+          console.error('Error:', data);
+          alert(`${response.status} ${data.message} ❌`); // Use data.message if your API returns a specific message, else use response.statusText
+        });
+      }
     })
     .catch((error) => {
       console.error('Error:', error);
+      alert('Network or server error ❌');
     });
   };
-  
+
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (containerRef.current && !containerRef.current.contains(event.target)) {
