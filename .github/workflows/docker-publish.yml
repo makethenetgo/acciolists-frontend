@@ -53,8 +53,15 @@ jobs:
           platforms: linux/amd64,linux/arm64
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          build-args: BUILDKIT_PROGRESS=plain
+          build-args: BUILDKIT_PROGRESS=plain,NPM_CONFIG_LOGLEVEL=verbose
           outputs: type=oci,dest=/tmp/myimage.tar
+
+      - name: Archive Docker build logs
+        uses: actions/upload-artifact@v2
+        with:
+          name: docker-build-logs
+          path: /tmp/myimage.tar
+          if-no-files-found: error # Change this to 'warn' or 'ignore' if you do not want the job to fail
 
       # Optional: If you need to do something with the built image locally
       - name: Load built Docker image
@@ -62,3 +69,5 @@ jobs:
         run: |
           docker load -i /tmp/myimage.tar
           docker images
+
+      # Additional steps like deploying or testing could go here
