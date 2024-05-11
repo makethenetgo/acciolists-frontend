@@ -9,7 +9,6 @@
     "react-color": "^2.19.3",
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.23.0",
-    "react-scripts": "5.0.1",
     "web-vitals": "^2.1.4"
   },
   "scripts": {
@@ -42,6 +41,14 @@
     "html-webpack-plugin": "^5.6.0",
     "webpack": "^5.91.0",
     "webpack-cli": "^5.1.4",
-    "webpack-dev-server": "^5.0.4"
+    "webpack-dev-server": "^5.0.4",
+    "@babel/plugin-transform-private-methods": "^7.14.5",
+    "@babel/plugin-transform-class-properties": "^7.14.5",
+    "@babel/plugin-transform-numeric-separator": "^7.14.5",
+    "@babel/plugin-transform-nullish-coalescing-operator": "^7.14.5",
+    "@babel/plugin-transform-optional-chaining": "^7.14.5",
+    "@rollup/plugin-terser": "^0.4.4",
+    "style-loader": "^3.3.1",
+    "css-loader": "^6.7.1"
   }
 }
