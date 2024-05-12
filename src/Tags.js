@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ChromePicker } from 'react-color';
+import axios from 'axios';
 
 const Tags = () => {
   const [color, setColor] = useState('#ffffff');
@@ -10,6 +11,18 @@ const Tags = () => {
   const handleColorChange = (newColor) => {
     setColor(newColor.hex);
   };
+
+  const [tags, setTags] = useState([]);
+
+  useEffect(() => {
+    axios.get('/api/tags')
+      .then(response => {
+        setTags(response.data);
+      })
+      .catch(error => {
+        console.error('There was an error!', error);
+      });
+  }, []);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -34,18 +47,18 @@ const Tags = () => {
       if (response.ok) { // Check if the status code is 200-299
         return response.json().then(data => {
           console.log('Success:', data);
-          alert(`Success: ${data.message} ✔️`); // Use data.message if your API returns a specific message, else use a generic text
+          alert(`Success: ${data.message} created`); // Use data.message if your API returns a specific message, else use a generic text
         });
       } else {
         return response.json().then(data => {
           console.error('Error:', data);
-          alert(`${response.status} ${data.message} ❌`); // Use data.message if your API returns a specific message, else use response.statusText
+          alert(`❌ ${response.status} ${data.message}`); // Use data.message if your API returns a specific message, else use response.statusText
         });
       }
     })
     .catch((error) => {
       console.error('Error:', error);
-      alert('Network or server error ❌');
+      alert('❌ Network or server error');
     });
   };
 
@@ -109,12 +122,14 @@ const Tags = () => {
                 </tr>
               </thead>
               <tbody>
-                <tr>
-                  <td>Muggle</td>
-                  <td>#2986cc</td>
-                  <td><button type="button" className="btn btn-primary">Update</button></td>
-                  <td><button type="button" className="btn btn-danger">Delete</button></td>
-                </tr>
+                {tags.map((tag, index) => (
+                  <tr key={index}>
+                    <td>{tag.name}</td>
+                    <td>{tag.color}</td>
+                    <td><button type="button" className="btn btn-primary">Update</button></td>
+                    <td><button type="button" className="btn btn-danger">Delete</button></td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>
