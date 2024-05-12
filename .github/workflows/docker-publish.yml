@@ -1,10 +1,10 @@
-name: Docker
+name: Docker Build and Push
 
 on:
   push:
-    tags: [ 'v*.*.*' ]
+    tags: ['v*.*.*']
   pull_request:
-    branches: [ "main" ]
+    branches: ['main']
 
 env:
   REGISTRY: ghcr.io
@@ -56,17 +56,13 @@ jobs:
           build-args: BUILDKIT_PROGRESS=plain,NPM_CONFIG_LOGLEVEL=verbose,NPM_CONFIG_REGISTRY=https://registry.npmjs.org/
           outputs: type=oci,dest=/tmp/myimage.tar
 
-      - name: Archive Docker build logs
-        if: failure() # Only run this step if the previous step failed
-        uses: actions/upload-artifact@v4
-        with:
-          name: npm-logs
-          path: /root/.npm/_logs/*.log
+      - name: Display npm logs if build fails
+        if: failure()
+        run: |
+          docker run --rm -v "/var/run/docker.sock:/var/run/docker.sock" -v "$PWD:/workspace" --workdir /workspace ubuntu tail -n 100 /workspace/root/.npm/_logs/*.log || echo "No logs found or permission denied"
 
       - name: Load built Docker image
         if: success()
         run: |
           docker load -i /tmp/myimage.tar
           docker images
-
-      # Additional steps like deploying or testing could go here
