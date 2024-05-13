@@ -8,11 +8,45 @@ const Tags = () => {
   const pickerRef = useRef(null);  // Reference to the color picker container
   const containerRef = useRef(null); // Reference to the container that holds the input and picker
 
+  const [tags, setTags] = useState([]);
+  const [currentTag, setCurrentTag] = useState(null);
+
   const handleColorChange = (newColor) => {
     setColor(newColor.hex);
+
+    if (currentTag) {
+      axios.put(`/api/tags/${currentTag}`, { color: newColor.hex })
+        .then(response => {
+          console.log('Update successful:', response);
+          fetchTags();
+          setCurrentTag(null);
+        })
+        .catch(error => {
+          console.error('There was an error!', error);
+        });
+    }
+  };  
+
+  const handleDelete = (id) => {
+    axios.delete(`/api/tags/${id}`)
+      .then(response => {
+        console.log('Delete successful:', response);
+        fetchTags();
+      })
+      .catch(error => {
+        console.error('There was an error!', error);
+      });
   };
 
-  const [tags, setTags] = useState([]);
+  const fetchTags = () => {
+    axios.get('/api/tags')
+      .then(response => {
+        setTags(response.data);
+      })
+      .catch(error => {
+        console.error('There was an error!', error);
+      });
+  };
 
   useEffect(() => {
     axios.get('/api/tags')
@@ -47,12 +81,13 @@ const Tags = () => {
       if (response.ok) { // Check if the status code is 200-299
         return response.json().then(data => {
           console.log('Success:', data);
-          alert(`Success: ${data.message} created`); // Use data.message if your API returns a specific message, else use a generic text
+          alert(`Success: ${data} created`);
+          fetchTags();
         });
       } else {
         return response.json().then(data => {
-          console.error('Error:', data);
-          alert(`❌ ${response.status} ${data.message}`); // Use data.message if your API returns a specific message, else use response.statusText
+          console.error('Error:', data.detail);
+          alert(`❌ ${response.status} ${data.detail}`); // Use data.message if your API returns a specific message, else use response.statusText
         });
       }
     })
@@ -84,7 +119,7 @@ const Tags = () => {
             <form onSubmit={handleSubmit}>
               <div className="form-group form-spacing">
                 <label className="form-spacing" htmlFor="newTag">Tag</label>
-                <input type="text" className="form-control" id="newTag" placeholder="Muggle" />
+                <input type="text" className="form-control" id="newTag" placeholder="Muggle" required />
               </div>
               <div className="form-group form-spacing" ref={containerRef}>
                 <label className="form-spacing" htmlFor="tagColor">Color</label>
@@ -115,6 +150,7 @@ const Tags = () => {
             <table className="table">
               <thead>
                 <tr className="table-active">
+                  <th scope="col" className="hidden">ID</th>
                   <th scope="col">Tag</th>
                   <th scope="col">Color</th>
                   <th scope="col">Update</th>
@@ -124,10 +160,11 @@ const Tags = () => {
               <tbody>
                 {tags.map((tag, index) => (
                   <tr key={index}>
+                    <td className="hidden">{tag._id}</td>
                     <td>{tag.name}</td>
-                    <td>{tag.color}</td>
+                    <td style={{cursor: 'pointer'}} onClick={() => {setColor(tag.color); setCurrentTag(tag._id); setShowColorPicker(true);}}>{tag.color}</td>
                     <td><button type="button" className="btn btn-primary">Update</button></td>
-                    <td><button type="button" className="btn btn-danger">Delete</button></td>
+                    <td><button type="button" className="btn btn-danger" onClick={() => handleDelete(tag._id)}>Delete</button></td>
                   </tr>
                 ))}
               </tbody>
