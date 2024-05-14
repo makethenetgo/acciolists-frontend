@@ -1,114 +1,93 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ChromePicker } from 'react-color';
 import axios from 'axios';
+import colorwheel from './assets/colorwheel.png'; // Adjust the path as necessary
 
 const Tags = () => {
-  const [color, setColor] = useState('#ffffff');
-  const [showColorPicker, setShowColorPicker] = useState(false);
-  const pickerRef = useRef(null);  // Reference to the color picker container
-  const containerRef = useRef(null); // Reference to the container that holds the input and picker
+  const [createColor, setCreateColor] = useState('#ffffff');
+  const [showCreatePicker, setShowCreatePicker] = useState(false);
+  const createPickerRef = useRef(null);
+  const createPickerButtonRef = useRef(null);
 
   const [tags, setTags] = useState([]);
-  const [currentTag, setCurrentTag] = useState(null);
+  const [pickerStates, setPickerStates] = useState(new Map());
+  const [tempColors, setTempColors] = useState(new Map());
 
-  const handleColorChange = (newColor) => {
-    setColor(newColor.hex);
-
-    if (currentTag) {
-      axios.put(`/api/tags/${currentTag}`, { color: newColor.hex })
-        .then(response => {
-          console.log('Update successful:', response);
-          fetchTags();
-          setCurrentTag(null);
-        })
-        .catch(error => {
-          console.error('There was an error!', error);
-        });
+  const fetchTags = async () => {
+    try {
+      const response = await axios.get('/api/tags');
+      setTags(response.data);
+      const initialPickerStates = new Map();
+      const initialTempColors = new Map();
+      response.data.forEach(tag => {
+        initialPickerStates.set(tag._id, { show: false, ref: React.createRef() });
+        initialTempColors.set(tag._id, tag.color);
+      });
+      setPickerStates(initialPickerStates);
+      setTempColors(initialTempColors);
+    } catch (error) {
+      console.error('Error fetching tags:', error);
     }
-  };  
-
-  const handleDelete = (id) => {
-    axios.delete(`/api/tags/${id}`)
-      .then(response => {
-        console.log('Delete successful:', response);
-        fetchTags();
-      })
-      .catch(error => {
-        console.error('There was an error!', error);
-      });
-  };
-
-  const fetchTags = () => {
-    axios.get('/api/tags')
-      .then(response => {
-        setTags(response.data);
-      })
-      .catch(error => {
-        console.error('There was an error!', error);
-      });
   };
 
   useEffect(() => {
-    axios.get('/api/tags')
-      .then(response => {
-        setTags(response.data);
-      })
-      .catch(error => {
-        console.error('There was an error!', error);
-      });
+    fetchTags(); // Initial fetch of tags
   }, []);
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-
-    const url = `/api/tags`; // Append your endpoint to the base URL
-
-    const payload = {
-      name: document.getElementById('newTag').value,
-      color: color
-    };
-
-    // Make the POST request
-    fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
-      body: JSON.stringify(payload)
-    })
-    .then(response => {
-      if (response.ok) { // Check if the status code is 200-299
-        return response.json().then(data => {
-          console.log('Success:', data);
-          alert(`Success: ${data} created`);
-          fetchTags();
-        });
-      } else {
-        return response.json().then(data => {
-          console.error('Error:', data.detail);
-          alert(`❌ ${response.status} ${data.detail}`); // Use data.message if your API returns a specific message, else use response.statusText
-        });
-      }
-    })
-    .catch((error) => {
-      console.error('Error:', error);
-      alert('❌ Network or server error');
-    });
-  };
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (containerRef.current && !containerRef.current.contains(event.target)) {
-        setShowColorPicker(false);
+      if (showCreatePicker && createPickerRef.current && !createPickerRef.current.contains(event.target) && !createPickerButtonRef.current.contains(event.target)) {
+        setShowCreatePicker(false);
       }
+      pickerStates.forEach((value, key) => {
+        if (value.show && value.ref.current && !value.ref.current.contains(event.target)) {
+          const updatedStates = new Map(pickerStates);
+          updatedStates.set(key, { ...value, show: false });
+          setPickerStates(updatedStates);
+        }
+      });
     };
 
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, []);
+  }, [showCreatePicker, pickerStates]);
+
+  const handleCreateSubmit = async (e) => {
+    e.preventDefault();
+    const newTag = document.getElementById('newTag').value;
+    try {
+      const response = await axios.post('/api/tags', { name: newTag, color: createColor });
+      console.log('Tag created:', response.data);
+      fetchTags();  // Call fetchTags to refresh the list
+    } catch (error) {
+      console.error('Error creating tag:', error);
+    }
+  };
+
+  const handleColorChange = (tagId, newColor) => {
+    const updatedTempColors = new Map(tempColors);
+    updatedTempColors.set(tagId, newColor.hex);
+    setTempColors(updatedTempColors);
+  };
+
+  const updateTagColor = async (tagId) => {
+    try {
+      await axios.put(`/api/tags/${tagId}`, { color: tempColors.get(tagId) });
+      console.log('Color updated');
+      fetchTags();
+    } catch (error) {
+      console.error('Error updating color:', error);
+    }
+  };
+
+  const togglePicker = (tagId) => {
+    const updatedStates = new Map(pickerStates);
+    const currentState = updatedStates.get(tagId);
+    updatedStates.set(tagId, { ...currentState, show: !currentState.show });
+    setPickerStates(updatedStates);
+  };
 
   return (
     <div className="table-margin">
@@ -116,55 +95,78 @@ const Tags = () => {
         <div className="col-sm">
           <div className="column-box">
             <h2><strong>Create New Tag</strong></h2>
-            <form onSubmit={handleSubmit}>
-              <div className="form-group form-spacing">
-                <label className="form-spacing" htmlFor="newTag">Tag</label>
-                <input type="text" className="form-control" id="newTag" placeholder="Muggle" required />
+            <form onSubmit={handleCreateSubmit}>
+              <div className="form-group">
+                <label htmlFor="newTag">Tag</label>
+                <input type="text" className="form-control" id="newTag" placeholder="Enter tag name" required />
               </div>
-              <div className="form-group form-spacing" ref={containerRef}>
-                <label className="form-spacing" htmlFor="tagColor">Color</label>
+              <div className="form-group">
+                <label htmlFor="tagColor">Color</label>
                 <div className="input-group">
-                  <input type="text" className="form-control" id="tagColor" placeholder="#ffffff" value={color} readOnly />
+                  <input type="text" className="form-control" value={createColor} readOnly />
                   <div className="input-group-append">
-                    <div className="input-group-text">
-                      <img src="/colorwheel.png" alt="Pick Color" style={{ height: '25px', cursor: 'pointer'}} onClick={() => setShowColorPicker(show => !show)} />
-                    </div>
+                    <button type="button" className="btn btn-outline-secondary" ref={createPickerButtonRef} onClick={() => setShowCreatePicker(true)}>
+                      <img src={colorwheel} alt="Pick Color" style={{ width: '20px', height: '20px' }} />
+                    </button>
                   </div>
                 </div>
-                {showColorPicker && (
-                  <div ref={pickerRef} style={{ position: 'absolute', zIndex: 2 }}>
-                    <ChromePicker
-                      color={color}
-                      onChangeComplete={handleColorChange}
-                    />
+                {showCreatePicker && (
+                  <div ref={createPickerRef} style={{ position: 'absolute', zIndex: 2 }} onClick={e => e.stopPropagation()}>
+                    <ChromePicker color={createColor} onChangeComplete={newColor => setCreateColor(newColor.hex)} />
                   </div>
                 )}
               </div>
-              <button type="submit" className="btn btn-primary form-spacing">Create</button>
+              <button type="submit" className="btn btn-primary">Create</button>
             </form>
           </div>
         </div>
         <div className="col-sm">
           <div className="column-box">
             <h2><strong>Tag List</strong></h2>
-            <table className="table">
+            <table className="table table-hover">
               <thead>
-                <tr className="table-active">
-                  <th scope="col" className="hidden">ID</th>
+                <tr>
                   <th scope="col">Tag</th>
                   <th scope="col">Color</th>
-                  <th scope="col">Update</th>
-                  <th scope="col">Delete</th>
+                  <th scope="col">Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {tags.map((tag, index) => (
-                  <tr key={index}>
-                    <td className="hidden">{tag._id}</td>
-                    <td>{tag.name}</td>
-                    <td style={{cursor: 'pointer'}} onClick={() => {setColor(tag.color); setCurrentTag(tag._id); setShowColorPicker(true);}}>{tag.color}</td>
-                    <td><button type="button" className="btn btn-primary">Update</button></td>
-                    <td><button type="button" className="btn btn-danger" onClick={() => handleDelete(tag._id)}>Delete</button></td>
+                {tags.map(tag => (
+                  <tr key={tag._id}>
+                    <td
+                      className="align-middle"
+                      style={{ cursor: 'pointer' }}
+                      onClick={() => togglePicker(tag._id)}
+                    >
+                      {tempColors.get(tag._id) !== tag.color && <span style={{ color: 'red', fontSize: '1.5em', verticalAlign: 'middle' }}>* </span>}
+                      {tag.name}
+                      {pickerStates.get(tag._id)?.show && (
+                        <div ref={pickerStates.get(tag._id).ref} style={{ position: 'absolute', zIndex: 2 }} onClick={e => e.stopPropagation()}>
+                          <ChromePicker color={tempColors.get(tag._id)} onChangeComplete={newColor => handleColorChange(tag._id, newColor)} />
+                        </div>
+                      )}
+                    </td>
+                    <td className="align-middle" style={{ cursor: 'pointer' }} onClick={() => togglePicker(tag._id)}>
+                      <div
+                        style={{
+                          backgroundColor: tempColors.get(tag._id),
+                          borderRadius: '5px',
+                          padding: '5px',
+                          display: 'inline-block',
+                          textAlign: 'center',
+                          minWidth: '60px'
+                        }}
+                      >
+                        {tempColors.get(tag._id)}
+                      </div>
+                    </td>
+                    <td className="align-middle">
+                      <div className="d-flex justify-content-around w-100">
+                        <button onClick={() => updateTagColor(tag._id)} className="btn btn-success">Update</button>
+                        <button onClick={() => axios.delete(`/api/tags/${tag._id}`).then(fetchTags)} className="btn btn-danger">Delete</button>
+                      </div>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -174,6 +176,6 @@ const Tags = () => {
       </div>
     </div>
   );
-}
+};
 
 export default Tags;

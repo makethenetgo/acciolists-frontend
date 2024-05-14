@@ -28,9 +28,24 @@ module.exports = {
       {
         test: /\.css$/,
         use: ['style-loader', 'css-loader'] // These loaders are used for processing CSS files.
-      }
-    ]
+      },
+      {
+        test: /\.(png|jpe?g|gif)$/i,
+        use: [
+          {
+            loader: 'file-loader',
+            options: {
+              name: '[path][name].[ext]',
+              context: 'src', // The context for the files.
+            },
+          },
+        ],
+      },
+    ],
   },
-  // You might also configure devServer, resolve, and other aspects depending on your needs.
+  devServer: {
+    contentBase: path.join(__dirname, 'public'),
+    compress: true,
+    port: 8080,
+  },
 };
-
