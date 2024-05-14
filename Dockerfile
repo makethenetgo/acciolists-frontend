@@ -2,10 +2,11 @@
 FROM node:18 as build
 WORKDIR /app
 
-# Install dependencies using npm with verbosity and retry mechanism
+# Install dependencies using npm with a retry mechanism
 COPY package*.json ./
-RUN npm install -g npm@latest \
-    && npm ci --verbose || npm ci --verbose || npm ci --verbose
+RUN npm install --no-audit --no-fund --prefer-offline || \
+    npm install --no-audit --no-fund --prefer-offline || \
+    npm install --no-audit --no-fund --prefer-offline
 
 # Copy the rest of your app's source code
 COPY . .
