@@ -5,7 +5,7 @@ WORKDIR /app
 # Install dependencies using npm with verbosity and retry mechanism
 COPY package*.json ./
 RUN npm install -g npm@latest \
-    && npm install --verbose || npm install --verbose || npm install --verbose
+    && npm ci --verbose || npm ci --verbose || npm ci --verbose
 
 # Copy the rest of your app's source code
 COPY . .
