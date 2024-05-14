@@ -2,15 +2,16 @@
 FROM node:18 as build
 WORKDIR /app
 
-# Install dependencies using Yarn
+# Install dependencies using npm with verbosity and retry mechanism
 COPY package*.json ./
-RUN yarn install
+RUN npm install -g npm@latest \
+    && npm install --verbose || npm install --verbose || npm install --verbose
 
 # Copy the rest of your app's source code
 COPY . .
 
 # Build your application
-RUN yarn build
+RUN npm run build
 
 # Use nginx to serve the built application
 FROM nginx:alpine
