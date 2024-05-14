@@ -1,6 +1,5 @@
 FROM node:18.20 as build
 WORKDIR /app
-# Change the permissions so the directory is accessible
 
 COPY package*.json ./
 RUN npm install
