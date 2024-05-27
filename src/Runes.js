@@ -7,6 +7,10 @@ const Runes = () => {
   const [runes, setRunes] = useState([]);
   const [expires, setExpires] = useState(false);
   const [expirationDate, setExpirationDate] = useState(null);
+  const [tags, setTags] = useState([]);
+  const [filteredTags, setFilteredTags] = useState([]);
+  const [tagInput, setTagInput] = useState('');
+  const [selectedTags, setSelectedTags] = useState([]);
 
   const fetchRunes = async () => {
     try {
@@ -17,20 +21,48 @@ const Runes = () => {
     }
   };
 
+  const fetchTags = async () => {
+    try {
+      const response = await axios.get('/api/tags');
+      setTags(response.data);
+    } catch (error) {
+      console.error('Error fetching tags:', error);
+    }
+  };
+
   useEffect(() => {
     fetchRunes(); // Initial fetch of runes
+    fetchTags(); // Initial fetch of tags
   }, []);
 
   const handleCreateSubmit = async (e) => {
     e.preventDefault();
     const newRune = document.getElementById('newRune').value;
     try {
-      const response = await axios.post('/api/runes', { name: newRune, expires, expirationDate });
+      const response = await axios.post('/api/runes', { name: newRune, expires, expirationDate, tags: selectedTags });
       console.log('Rune created:', response.data);
       fetchRunes();  // Call fetchRunes to refresh the list
+      setSelectedTags([]);
+      setTagInput('');
     } catch (error) {
       console.error('Error creating rune:', error);
     }
+  };
+
+  const handleTagInput = (e) => {
+    const input = e.target.value;
+    setTagInput(input);
+    if (input.length > 0) {
+      setFilteredTags(tags.filter(tag => tag.toLowerCase().includes(input.toLowerCase())));
+    } else {
+      setFilteredTags([]);
+    }
+  };
+
+  const handleTagSelect = (tag) => {
+    setSelectedTags([...selectedTags, tag]);
+    setTagInput('');
+    setFilteredTags([]);
   };
 
   return (
@@ -47,7 +79,31 @@ const Runes = () => {
               <div className="form-group text-left">
                 <label htmlFor="runeTags" className="d-block text-left">Tags</label>
                 <div className="input-group">
-                  <input type="text" className="form-control" placeholder="Comma Separated List of Tags" />
+                  <input 
+                    type="text" 
+                    className="form-control" 
+                    placeholder="Type to search tags" 
+                    value={tagInput} 
+                    onChange={handleTagInput} 
+                  />
+                </div>
+                {filteredTags.length > 0 && (
+                  <ul className="list-group">
+                    {filteredTags.map(tag => (
+                      <li 
+                        key={tag} 
+                        className="list-group-item list-group-item-action" 
+                        onClick={() => handleTagSelect(tag)}
+                      >
+                        {tag}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                <div className="mt-2">
+                  {selectedTags.map(tag => (
+                    <span key={tag} className="badge badge-primary mr-2">{tag}</span>
+                  ))}
                 </div>
               </div>
               <div className="form-group text-left">
