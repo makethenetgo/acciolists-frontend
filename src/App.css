@@ -48,17 +48,43 @@ body {
   margin-bottom: 20px; /* Space between the boxes */
 }
 
+.form-group label {
+  text-align: left;
+  font-weight: bold;
+}
+
+.form-group {
+  text-align: left;
+  margin-bottom: 20px; /* Increase space between form groups */
+}
+
+.form-check-inline .form-check-label {
+  font-weight: normal;
+}
+
+.form-check-inline {
+  margin-right: 10px;
+}
+
+.form-check-inline .form-check-input {
+  margin-top: 5px;
+}
+
+#expirationDate {
+  text-align: left;
+}
+
 .navbar-brand {
   margin-left: 20px; /* Adjust as needed */
   font-weight: bold;
-  font-size:xx-large;
+  font-size: xx-large;
 }
 
 .table-margin {
-  margin: 20px;
+  margin: 10px;
 }
 
 .form-spacing {
-  margin-top: 4px;
-  margin-bottom: 4px;
+  margin-top: 1px;
+  margin-bottom: 1px;
 }

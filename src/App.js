@@ -3,6 +3,7 @@ import { Navbar, Nav } from 'react-bootstrap';
 import { BrowserRouter as Router, Route, Link, Routes } from 'react-router-dom';
 import './App.css';
 import Tags from './Tags';
+import Runes from './Runes'
 
 function App() {
   return (
@@ -22,7 +23,7 @@ function App() {
 
         <Routes>
           <Route path="/tags" element={<Tags />} />
-          {/* Add more routes as needed */}
+          <Route path="/runes" element={<Runes />} />
         </Routes>
       </div>
     </Router>
