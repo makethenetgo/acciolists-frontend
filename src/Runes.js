@@ -11,6 +11,7 @@ const Runes = () => {
   const [filteredTags, setFilteredTags] = useState([]);
   const [tagInput, setTagInput] = useState('');
   const [selectedTags, setSelectedTags] = useState([]);
+  const [runeType, setRuneType] = useState('');
 
   const fetchRunes = async () => {
     try {
@@ -39,7 +40,7 @@ const Runes = () => {
     e.preventDefault();
     const newRune = document.getElementById('newRune').value;
     try {
-      const response = await axios.post('/api/runes', { name: newRune, expires, expirationDate, tags: selectedTags });
+      const response = await axios.post('/api/runes', { name: newRune, expires, expirationDate, tags: selectedTags, type: runeType });
       console.log('Rune created:', response.data);
       fetchRunes();  // Call fetchRunes to refresh the list
       setSelectedTags([]);
@@ -60,7 +61,9 @@ const Runes = () => {
   };
 
   const handleTagSelect = (tag) => {
-    setSelectedTags([...selectedTags, tag]);
+    if (!selectedTags.includes(tag)) {
+      setSelectedTags([...selectedTags, tag]);
+    }
     setTagInput('');
     setFilteredTags([]);
   };
@@ -88,7 +91,7 @@ const Runes = () => {
                   />
                 </div>
                 {filteredTags.length > 0 && (
-                  <ul className="list-group">
+                  <ul className="list-group mt-2">
                     {filteredTags.map(tag => (
                       <li 
                         key={tag} 
@@ -105,6 +108,21 @@ const Runes = () => {
                     <span key={tag} className="badge badge-primary mr-2">{tag}</span>
                   ))}
                 </div>
+              </div>
+              <div className="form-group text-left">
+                <label htmlFor="runeType" className="d-block text-left">Type</label>
+                <select 
+                  id="runeType" 
+                  className="form-control" 
+                  value={runeType} 
+                  onChange={(e) => setRuneType(e.target.value)} 
+                  required
+                >
+                  <option value="">Select Type</option>
+                  <option value="IP">IP</option>
+                  <option value="URL">URL</option>
+                  <option value="Domain">Domain</option>
+                </select>
               </div>
               <div className="form-group text-left">
                 <label htmlFor="runeExpires" className="d-block text-left">Expires</label>
@@ -144,6 +162,7 @@ const Runes = () => {
                 <tr>
                   <th scope="col">Rune</th>
                   <th scope="col">Tags</th>
+                  <th scope="col">Type</th>
                   <th scope="col">Expiration</th>
                   <th scope="col">Actions</th>
                 </tr>
@@ -153,6 +172,7 @@ const Runes = () => {
                   <tr key={rune._id}>
                     <td>{rune.name}</td>
                     <td>{rune.tags?.join(', ')}</td>
+                    <td>{rune.type}</td>
                     <td>{rune.expires ? 'True' : 'False'}</td>
                     <td>
                       <div className="d-flex justify-content-around">
