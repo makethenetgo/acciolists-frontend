@@ -1,26 +1,66 @@
-# This is a basic workflow to help you get started with the GitHub Auto-Release on Commit Action.
-
-name: AutoRelease
+name: release
 
 on:
-  push:
-    branches: [ main ]
+  pull_request:
+    branches:
+      - main
+    types:
+      - closed
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  # This workflow contains a single job called "build"
   release:
-    # The type of runner that the job will run on
+    name: Release module
+    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
-
-    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      - uses: actions/checkout@v2
-      - uses: CupOfTea696/gh-action-auto-release@v1.0.0
+      - name: Checkout
+        uses: actions/checkout@v4
         with:
-          title: "Release: $version"
-          tag: "v$semver"
+          fetch-depth: 0
+
+      - name: Get Previous tag
+        id: previoustag
+        uses: "WyriHaximus/github-action-get-previous-tag@v1"
+        with:
+          fallback: 0.0.0
+        env:
+          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+
+      - name: Get next version
+        id: semvers
+        uses: "WyriHaximus/github-action-next-semvers@v1"
+        with:
+          version: ${{ steps.previoustag.outputs.tag }}
+
+      - name: Create release - major
+        if: contains(github.event.pull_request.labels.*.name, 'major')
+        uses: actions/create-release@v1
+        with:
+          tag_name: ${{ steps.semvers.outputs.major }}
+          release_name: ${{ github.event.pull_request.title }}
           draft: false
-          regex: "/^Release: #{semver}$/i"
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create release - minor
+        if: contains(github.event.pull_request.labels.*.name, 'minor')
+        uses: actions/create-release@v1
+        with:
+          tag_name: ${{ steps.semvers.outputs.minor }}
+          release_name: ${{ github.event.pull_request.title }}
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create release - patch
+        if: contains(github.event.pull_request.labels.*.name, 'patch')
+        uses: actions/create-release@v1
+        with:
+          tag_name: ${{ steps.semvers.outputs.patch }}
+          release_name: ${{ github.event.pull_request.title }}
+          draft: false
+          prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
