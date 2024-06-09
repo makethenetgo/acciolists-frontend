@@ -3,6 +3,9 @@ on:
     types:
     - closed
 
+permissions:
+  contents: write
+
 jobs:
   release:
     name: Release module
@@ -33,7 +36,7 @@ jobs:
         if: contains(github.event.pull_request.labels.*.name, 'major')
         uses: actions/create-release@v1
         with:
-          tag_name: ${{ steps.semvers.outputs.major }}
+          tag_name: ${{ steps.semvers.outputs.v_major }}
           release_name: ${{ github.event.pull_request.title }}
           draft: false
           prerelease: false
@@ -44,7 +47,7 @@ jobs:
         if: contains(github.event.pull_request.labels.*.name, 'minor')
         uses: actions/create-release@v1
         with:
-          tag_name: ${{ steps.semvers.outputs.minor }}
+          tag_name: ${{ steps.semvers.outputs.v_minor }}
           release_name: ${{ github.event.pull_request.title }}
           draft: false
           prerelease: false
@@ -55,7 +58,7 @@ jobs:
         if: contains(github.event.pull_request.labels.*.name, 'patch')
         uses: actions/create-release@latest
         with:
-          tag_name: ${{ steps.semvers.outputs.patch }}
+          tag_name: ${{ steps.semvers.outputs.v_patch }}
           release_name: ${{ github.event.pull_request.title }}
           draft: false
           prerelease: false
