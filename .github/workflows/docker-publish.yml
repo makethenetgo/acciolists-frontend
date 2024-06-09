@@ -1,12 +1,8 @@
 name: Docker
 
 on:
-  create:
-    tags:
-      - '*'
-  push:
-    tags:
-      - '*'
+  release:
+    types: [published]
   pull_request:
     branches: [ "main" ]
 
