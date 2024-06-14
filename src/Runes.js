@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
-import config from './config'; // Import the config object
+import config from './config';
 
 const Runes = () => {
   const [runes, setRunes] = useState([]);
@@ -35,8 +35,8 @@ const Runes = () => {
   };
 
   useEffect(() => {
-    fetchRunes(); // Initial fetch of runes
-    fetchTags(); // Initial fetch of tags
+    fetchRunes();
+    fetchTags();
   }, []);
 
   const handleCreateSubmit = async (e) => {
@@ -45,7 +45,7 @@ const Runes = () => {
     try {
       const response = await axios.post(`${API_URL}/api/runes`, { name: newRune, expires, expirationDate, tags: selectedTags, type: runeType });
       console.log('Rune created:', response.data);
-      fetchRunes();  // Call fetchRunes to refresh the list
+      fetchRunes();
       setSelectedTags([]);
       setTagInput('');
     } catch (error) {
