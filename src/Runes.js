@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
+import config from './config'; // Import the config object
 
 const Runes = () => {
   const [runes, setRunes] = useState([]);
@@ -13,9 +14,11 @@ const Runes = () => {
   const [selectedTags, setSelectedTags] = useState([]);
   const [runeType, setRuneType] = useState('');
 
+  const API_URL = config.API_URL;
+
   const fetchRunes = async () => {
     try {
-      const response = await axios.get('/api/runes');
+      const response = await axios.get(`${API_URL}/api/runes`);
       setRunes(response.data);
     } catch (error) {
       console.error('Error fetching runes:', error);
@@ -24,7 +27,7 @@ const Runes = () => {
 
   const fetchTags = async () => {
     try {
-      const response = await axios.get('/api/tags');
+      const response = await axios.get(`${API_URL}/api/tags`);
       setTags(response.data);
     } catch (error) {
       console.error('Error fetching tags:', error);
@@ -40,7 +43,7 @@ const Runes = () => {
     e.preventDefault();
     const newRune = document.getElementById('newRune').value;
     try {
-      const response = await axios.post('/api/runes', { name: newRune, expires, expirationDate, tags: selectedTags, type: runeType });
+      const response = await axios.post(`${API_URL}/api/runes`, { name: newRune, expires, expirationDate, tags: selectedTags, type: runeType });
       console.log('Rune created:', response.data);
       fetchRunes();  // Call fetchRunes to refresh the list
       setSelectedTags([]);
@@ -177,7 +180,7 @@ const Runes = () => {
                     <td>
                       <div className="d-flex justify-content-around">
                         <button onClick={() => console.log('Update clicked')} className="btn btn-success">Update</button>
-                        <button onClick={() => axios.delete(`/api/runes/${rune._id}`).then(fetchRunes)} className="btn btn-danger">Delete</button>
+                        <button onClick={() => axios.delete(`${API_URL}/api/runes/${rune._id}`).then(fetchRunes)} className="btn btn-danger">Delete</button>
                       </div>
                     </td>
                   </tr>
