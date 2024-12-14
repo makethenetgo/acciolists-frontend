@@ -2,11 +2,13 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
+import { Dropdown } from 'react-bootstrap';
 
 const Runes = () => {
   const [runes, setRunes] = useState([]);
   const [expires, setExpires] = useState(false);
   const [expirationDate, setExpirationDate] = useState(null);
+  const [selectedType, setSelectedType] = useState("");
 
   const fetchRunes = async () => {
     try {
@@ -24,14 +26,16 @@ const Runes = () => {
   const handleCreateSubmit = async (e) => {
     e.preventDefault();
     const newRune = document.getElementById('newRune').value;
+    const url = `/api/runes/${encodeURIComponent(selectedType)}`
     try {
-      const response = await axios.post('/api/runes', { name: newRune, expires, expirationDate });
+      const response = await axios.post(url, { name: newRune, type: selectedType, expires, expirationDate });
       console.log('Rune created:', response.data);
       fetchRunes();  // Call fetchRunes to refresh the list
     } catch (error) {
       console.error('Error creating rune:', error);
     }
   };
+
 
   return (
     <div className="table-margin">
@@ -49,6 +53,19 @@ const Runes = () => {
                 <div className="input-group">
                   <input type="text" className="form-control" placeholder="Comma Separated List of Tags" />
                 </div>
+              </div>
+              <div className="form-group text-left">
+                <label htmlFor="runeType" className="d-block text-left">Type</label>
+                <Dropdown onSelect={(eventKey) => setSelectedType(eventKey)}>
+                  <Dropdown.Toggle variant="secondary" id="dropdown-basic">
+                    {selectedType || "Select"}
+                  </Dropdown.Toggle>
+                  <Dropdown.Menu>
+                    <Dropdown.Item eventKey="IP">IP</Dropdown.Item>
+                    <Dropdown.Item eventKey="URL">URL</Dropdown.Item>
+                    <Dropdown.Item eventKey="Domain">Domain</Dropdown.Item>
+                  </Dropdown.Menu>
+                </Dropdown>
               </div>
               <div className="form-group text-left">
                 <label htmlFor="runeExpires" className="d-block text-left">Expires</label>
