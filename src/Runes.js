@@ -3,7 +3,6 @@ import axios from 'axios';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { Dropdown } from 'react-bootstrap';
-import config from './config';
 
 
 const Runes = () => {
@@ -44,7 +43,6 @@ const Runes = () => {
       console.log('Rune created:', response.data);
       fetchRunes();
       setSelectedTags([]);
-      setTagInput('');
     } catch (error) {
       console.error('Error creating rune:', error);
     }
