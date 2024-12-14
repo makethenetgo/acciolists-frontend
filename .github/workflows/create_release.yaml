@@ -1,0 +1,66 @@
+on:
+  pull_request:
+    types:
+    - closed
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Release module
+    if: github.event.pull_request.merged == true && github.event.pull_request.base.ref == 'main'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get Previous tag
+        id: previoustag
+        uses: "WyriHaximus/github-action-get-previous-tag@v1"
+        with:
+          fallback: 0.0.0
+        env:
+          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+
+      - name: Get next version
+        id: semvers
+        uses: "WyriHaximus/github-action-next-semvers@v1"
+        with:
+          version: ${{ steps.previoustag.outputs.tag }}
+
+      - name: Create release - major
+        if: contains(github.event.pull_request.labels.*.name, 'major')
+        uses: actions/create-release@latest
+        with:
+          tag_name: ${{ steps.semvers.outputs.v_major }}
+          release_name: ${{ steps.semvers.outputs.v_major }}
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create release - minor
+        if: contains(github.event.pull_request.labels.*.name, 'minor')
+        uses: actions/create-release@latest
+        with:
+          tag_name: ${{ steps.semvers.outputs.v_minor }}
+          release_name: ${{ steps.semvers.outputs.v_minor }}
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create release - patch
+        if: contains(github.event.pull_request.labels.*.name, 'patch')
+        uses: actions/create-release@latest
+        with:
+          tag_name: ${{ steps.semvers.outputs.v_patch }}
+          release_name: ${{ steps.semvers.outputs.v_patch }}
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,53 +1,46 @@
-const HtmlWebpackPlugin = require('html-webpack-plugin');
 const path = require('path');
 
 module.exports = {
-  entry: './src/index.js', // This should point to your main JavaScript file.
+  entry: './src/index.js',
   output: {
-    path: path.resolve(__dirname, 'dist'), // The output directory for the build.
-    filename: 'bundle.js' // The name of the output file containing your bundled code.
+    path: path.resolve(__dirname, 'dist'),
+    filename: 'bundle.js'
   },
-  plugins: [
-    new HtmlWebpackPlugin({
-      template: path.resolve(__dirname, 'public', 'index.html'), // Path to your index.html
-      filename: 'index.html' // The output file name (it usually remains index.html).
-    })
-  ],
   module: {
     rules: [
       {
         test: /\.js$/,
         exclude: /node_modules/,
         use: {
-          loader: 'babel-loader', // This loader is required to handle JavaScript (React) files.
+          loader: 'babel-loader',
           options: {
-            presets: ['@babel/preset-react'] // This preset is needed for React code.
+            presets: ['@babel/preset-env', '@babel/preset-react']
           }
         }
       },
       {
         test: /\.css$/,
-        use: ['style-loader', 'css-loader'] // These loaders are used for processing CSS files.
+        use: ['style-loader', 'css-loader']
       },
       {
-        test: /\.(png|jpe?g|gif)$/i,
-        use: [
-          {
-            loader: 'file-loader',
-            options: {
-              name: '[path][name].[ext]',
-              context: 'src', // The context for the files.
-            },
-          },
-        ],
+        test: /\.(png|svg|jpg|jpeg|gif)$/i,
+        type: 'asset/resource',
       },
-    ],
+    ]
+  },
+  resolve: {
+    fallback: {
+      "path": require.resolve("path-browserify"),
+      "os": require.resolve("os-browserify/browser"),
+      "crypto": require.resolve("crypto-browserify"),
+      "buffer": require.resolve("buffer/"),
+      "stream": require.resolve("stream-browserify"),
+      "vm": require.resolve("vm-browserify")
+    }
   },
   devServer: {
-    static: {
-      directory: path.join(__dirname, 'public'),
-    },
+    static: path.join(__dirname, 'public'),
     compress: true,
     port: 8080,
-  },
+  }
 };

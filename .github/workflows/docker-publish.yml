@@ -1,9 +1,8 @@
 name: Docker
 
 on:
-  push:
-    tags: [ 'v*.*.*' ]
-    branches: [ "main" ]
+  release:
+    types: ["released", "prereleased"]
   pull_request:
     branches: [ "main" ]
 

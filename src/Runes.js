@@ -3,6 +3,8 @@ import axios from 'axios';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { Dropdown } from 'react-bootstrap';
+import config from './config';
+
 
 const Runes = () => {
   const [runes, setRunes] = useState([]);
@@ -12,15 +14,25 @@ const Runes = () => {
 
   const fetchRunes = async () => {
     try {
-      const response = await axios.get('/api/runes');
+      const response = await axios.get(`${API_URL}/api/runes`);
       setRunes(response.data);
     } catch (error) {
       console.error('Error fetching runes:', error);
     }
   };
 
+  const fetchTags = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/api/tags`);
+      setTags(response.data);
+    } catch (error) {
+      console.error('Error fetching tags:', error);
+    }
+  };
+
   useEffect(() => {
-    fetchRunes(); // Initial fetch of runes
+    fetchRunes();
+    fetchTags();
   }, []);
 
   const handleCreateSubmit = async (e) => {
@@ -30,12 +42,13 @@ const Runes = () => {
     try {
       const response = await axios.post(url, { name: newRune, type: selectedType, expires, expirationDate });
       console.log('Rune created:', response.data);
-      fetchRunes();  // Call fetchRunes to refresh the list
+      fetchRunes();
+      setSelectedTags([]);
+      setTagInput('');
     } catch (error) {
       console.error('Error creating rune:', error);
     }
   };
-
 
   return (
     <div className="table-margin">
@@ -51,7 +64,31 @@ const Runes = () => {
               <div className="form-group text-left">
                 <label htmlFor="runeTags" className="d-block text-left">Tags</label>
                 <div className="input-group">
-                  <input type="text" className="form-control" placeholder="Comma Separated List of Tags" />
+                  <input 
+                    type="text" 
+                    className="form-control" 
+                    placeholder="Type to search tags" 
+                    value={tagInput} 
+                    onChange={handleTagInput} 
+                  />
+                </div>
+                {filteredTags.length > 0 && (
+                  <ul className="list-group mt-2">
+                    {filteredTags.map(tag => (
+                      <li 
+                        key={tag} 
+                        className="list-group-item list-group-item-action" 
+                        onClick={() => handleTagSelect(tag)}
+                      >
+                        {tag}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                <div className="mt-2">
+                  {selectedTags.map(tag => (
+                    <span key={tag} className="badge badge-primary mr-2">{tag}</span>
+                  ))}
                 </div>
               </div>
               <div className="form-group text-left">
@@ -105,6 +142,7 @@ const Runes = () => {
                 <tr>
                   <th scope="col">Rune</th>
                   <th scope="col">Tags</th>
+                  <th scope="col">Type</th>
                   <th scope="col">Expiration</th>
                   <th scope="col">Actions</th>
                 </tr>
@@ -114,11 +152,12 @@ const Runes = () => {
                   <tr key={rune._id}>
                     <td>{rune.name}</td>
                     <td>{rune.tags?.join(', ')}</td>
+                    <td>{rune.type}</td>
                     <td>{rune.expires ? 'True' : 'False'}</td>
                     <td>
                       <div className="d-flex justify-content-around">
                         <button onClick={() => console.log('Update clicked')} className="btn btn-success">Update</button>
-                        <button onClick={() => axios.delete(`/api/runes/${rune._id}`).then(fetchRunes)} className="btn btn-danger">Delete</button>
+                        <button onClick={() => axios.delete(`${API_URL}/api/runes/${rune._id}`).then(fetchRunes)} className="btn btn-danger">Delete</button>
                       </div>
                     </td>
                   </tr>
