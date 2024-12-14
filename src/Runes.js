@@ -2,20 +2,18 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
+import { Dropdown } from 'react-bootstrap';
+
 
 const Runes = () => {
   const [runes, setRunes] = useState([]);
   const [expires, setExpires] = useState(false);
   const [expirationDate, setExpirationDate] = useState(null);
-  const [tags, setTags] = useState([]);
-  const [filteredTags, setFilteredTags] = useState([]);
-  const [tagInput, setTagInput] = useState('');
-  const [selectedTags, setSelectedTags] = useState([]);
-  const [runeType, setRuneType] = useState('');
+  const [selectedType, setSelectedType] = useState("");
 
   const fetchRunes = async () => {
     try {
-      const response = await axios.get('/api/runes');
+      const response = await axios.get(`${API_URL}/api/runes`);
       setRunes(response.data);
     } catch (error) {
       console.error('Error fetching runes:', error);
@@ -24,7 +22,7 @@ const Runes = () => {
 
   const fetchTags = async () => {
     try {
-      const response = await axios.get('/api/tags');
+      const response = await axios.get(`${API_URL}/api/tags`);
       setTags(response.data);
     } catch (error) {
       console.error('Error fetching tags:', error);
@@ -32,40 +30,23 @@ const Runes = () => {
   };
 
   useEffect(() => {
-    fetchRunes(); // Initial fetch of runes
-    fetchTags(); // Initial fetch of tags
+    fetchRunes();
+    fetchTags();
   }, []);
 
   const handleCreateSubmit = async (e) => {
     e.preventDefault();
     const newRune = document.getElementById('newRune').value;
+    const url = `/api/runes/${encodeURIComponent(selectedType)}`
     try {
-      const response = await axios.post('/api/runes', { name: newRune, expires, expirationDate, tags: selectedTags, type: runeType });
+      const response = await axios.post(url, { name: newRune, type: selectedType, expires, expirationDate });
       console.log('Rune created:', response.data);
-      fetchRunes();  // Call fetchRunes to refresh the list
+      fetchRunes();
       setSelectedTags([]);
       setTagInput('');
     } catch (error) {
       console.error('Error creating rune:', error);
     }
-  };
-
-  const handleTagInput = (e) => {
-    const input = e.target.value;
-    setTagInput(input);
-    if (input.length > 0) {
-      setFilteredTags(tags.filter(tag => tag.toLowerCase().includes(input.toLowerCase())));
-    } else {
-      setFilteredTags([]);
-    }
-  };
-
-  const handleTagSelect = (tag) => {
-    if (!selectedTags.includes(tag)) {
-      setSelectedTags([...selectedTags, tag]);
-    }
-    setTagInput('');
-    setFilteredTags([]);
   };
 
   return (
@@ -111,18 +92,16 @@ const Runes = () => {
               </div>
               <div className="form-group text-left">
                 <label htmlFor="runeType" className="d-block text-left">Type</label>
-                <select 
-                  id="runeType" 
-                  className="form-control" 
-                  value={runeType} 
-                  onChange={(e) => setRuneType(e.target.value)} 
-                  required
-                >
-                  <option value="">Select Type</option>
-                  <option value="IP">IP</option>
-                  <option value="URL">URL</option>
-                  <option value="Domain">Domain</option>
-                </select>
+                <Dropdown onSelect={(eventKey) => setSelectedType(eventKey)}>
+                  <Dropdown.Toggle variant="secondary" id="dropdown-basic">
+                    {selectedType || "Select"}
+                  </Dropdown.Toggle>
+                  <Dropdown.Menu>
+                    <Dropdown.Item eventKey="IP">IP</Dropdown.Item>
+                    <Dropdown.Item eventKey="URL">URL</Dropdown.Item>
+                    <Dropdown.Item eventKey="Domain">Domain</Dropdown.Item>
+                  </Dropdown.Menu>
+                </Dropdown>
               </div>
               <div className="form-group text-left">
                 <label htmlFor="runeExpires" className="d-block text-left">Expires</label>
@@ -177,7 +156,7 @@ const Runes = () => {
                     <td>
                       <div className="d-flex justify-content-around">
                         <button onClick={() => console.log('Update clicked')} className="btn btn-success">Update</button>
-                        <button onClick={() => axios.delete(`/api/runes/${rune._id}`).then(fetchRunes)} className="btn btn-danger">Delete</button>
+                        <button onClick={() => axios.delete(`${API_URL}/api/runes/${rune._id}`).then(fetchRunes)} className="btn btn-danger">Delete</button>
                       </div>
                     </td>
                   </tr>
