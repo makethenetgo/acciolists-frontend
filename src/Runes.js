@@ -43,7 +43,6 @@ const Runes = () => {
       console.log('Rune created:', response.data);
       fetchRunes();
       setSelectedTags([]);
-      setTagInput('');
     } catch (error) {
       console.error('Error creating rune:', error);
     }
