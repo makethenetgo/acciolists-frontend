@@ -3,7 +3,7 @@ import { Navbar, Nav } from 'react-bootstrap';
 import { BrowserRouter as Router, Route, Link, Routes } from 'react-router-dom';
 import './App.css';
 import Tags from './Tags';
-import Runes from './Runes'
+import Runes from './Runes';
 
 function App() {
   return (

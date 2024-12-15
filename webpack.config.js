@@ -1,17 +1,21 @@
 const HtmlWebpackPlugin = require('html-webpack-plugin');
+const webpack = require('webpack'); // Ensure webpack is required
 const path = require('path');
 
 module.exports = {
-  entry: './src/index.js', // This should point to your main JavaScript file.
+  entry: './src/index.js',
   output: {
-    path: path.resolve(__dirname, 'dist'), // The output directory for the build.
-    filename: 'bundle.js' // The name of the output file containing your bundled code.
+    path: path.resolve(__dirname, 'dist'),
+    filename: 'bundle.js'
   },
   plugins: [
     new HtmlWebpackPlugin({
-      template: path.resolve(__dirname, 'public', 'index.html'), // Path to your index.html
-      filename: 'index.html' // The output file name (it usually remains index.html).
-    })
+      template: path.resolve(__dirname, 'public', 'index.html'),
+      filename: 'index.html'
+    }),
+    new webpack.DefinePlugin({
+      'process.env.API_URL': JSON.stringify(process.env.API_URL)
+    })  // Adding the DefinePlugin to define the process.env.API_URL variable
   ],
   module: {
     rules: [
@@ -19,15 +23,15 @@ module.exports = {
         test: /\.js$/,
         exclude: /node_modules/,
         use: {
-          loader: 'babel-loader', // This loader is required to handle JavaScript (React) files.
+          loader: 'babel-loader',
           options: {
-            presets: ['@babel/preset-react'] // This preset is needed for React code.
+            presets: ['@babel/preset-react']
           }
         }
       },
       {
         test: /\.css$/,
-        use: ['style-loader', 'css-loader'] // These loaders are used for processing CSS files.
+        use: ['style-loader', 'css-loader']
       },
       {
         test: /\.(png|jpe?g|gif)$/i,
@@ -36,7 +40,7 @@ module.exports = {
             loader: 'file-loader',
             options: {
               name: '[path][name].[ext]',
-              context: 'src', // The context for the files.
+              context: 'src',
             },
           },
         ],
