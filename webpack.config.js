@@ -1,6 +1,6 @@
 const HtmlWebpackPlugin = require('html-webpack-plugin');
-const webpack = require('webpack'); // Ensure webpack is required
 const path = require('path');
+const Dotenv = require('dotenv-webpack');
 
 module.exports = {
   entry: './src/index.js',
@@ -13,9 +13,10 @@ module.exports = {
       template: path.resolve(__dirname, 'public', 'index.html'),
       filename: 'index.html'
     }),
-    new webpack.DefinePlugin({
-      'process.env.API_URL': JSON.stringify(process.env.API_URL)
-    })  // Adding the DefinePlugin to define the process.env.API_URL variable
+    new Dotenv({
+      path: `./.env.${process.env.NODE_ENV}`, // Use the appropriate .env file based on the NODE_ENV
+      systemvars: true // Optionally, load system environment variables
+    })
   ],
   module: {
     rules: [
