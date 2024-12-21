@@ -27,7 +27,7 @@ const Runes = () => {
   const [updateFilteredTags, setUpdateFilteredTags] = useState([]);
   const [updateSelectedTags, setUpdateSelectedTags] = useState([]);
   const [selectedType, setSelectedType] = useState(''); // Initialize with an empty string or a default type
-
+  const apiUrl = process.env.API_URL || "";
 
   useEffect(() => {
     fetchRunes();
@@ -36,9 +36,9 @@ const Runes = () => {
 
   const fetchRunes = async () => {
     const endpoints = [
-      { type: 'IP', url: `${process.env.API_URL}/api/runes/ip`, enabled: filterIP },
-      { type: 'URL', url: `${process.env.API_URL}/api/runes/url`, enabled: filterURL },
-      { type: 'Domain', url: `${process.env.API_URL}/api/runes/domain`, enabled: filterDomain },
+      { type: 'IP', url: `${apiUrl}/api/runes/ip`, enabled: filterIP },
+      { type: 'URL', url: `${apiUrl}/api/runes/url`, enabled: filterURL },
+      { type: 'Domain', url: `${apiUrl}/api/runes/domain`, enabled: filterDomain },
     ];
 
     try {
@@ -49,7 +49,7 @@ const Runes = () => {
             axios.get(endpoint.url).then(response =>
               Promise.all(response.data.map(async rune => {
                 const tagsWithDetails = await Promise.all(rune.tags.map(async tagName =>
-                  axios.get(`${process.env.API_URL}/api/tags?name=${tagName}`).then(tagResponse =>
+                  axios.get(`${apiUrl}/api/tags?name=${tagName}`).then(tagResponse =>
                     tagResponse.data[0]
                   )
                 ));
@@ -192,7 +192,7 @@ const Runes = () => {
     if (changesDetected) {
       try {
           console.log("payload:", payload);
-          const response = await axios.put(`${process.env.API_URL}/api/runes/${updatedRune.type.toLowerCase()}/${updatedRune._id}`, payload);
+          const response = await axios.put(`${apiUrl}/api/runes/${updatedRune.type.toLowerCase()}/${updatedRune._id}`, payload);
           console.log('Rune updated:', response.data);
   
           // Update the runes state with the response data
@@ -234,7 +234,7 @@ const Runes = () => {
 
   const fetchTags = async () => {
     try {
-      const response = await axios.get(`${process.env.API_URL}/api/tags`);
+      const response = await axios.get(`${apiUrl}/api/tags`);
       setTags(response.data);
     } catch (error) {
       console.error('Error fetching tags:', error);
@@ -244,7 +244,7 @@ const Runes = () => {
   const handleCreateSubmit = async (e) => {
     e.preventDefault();
     const newRune = document.getElementById('newRune').value.trim();
-    const runeEndpoint = `${process.env.API_URL}/api/runes/${selectedType.toLowerCase()}`;
+    const runeEndpoint = `${apiUrl}/api/runes/${selectedType.toLowerCase()}`;
 
     try {
       const requestBody = {
@@ -380,7 +380,7 @@ const Runes = () => {
       console.error("Rune type is undefined.");
       return;
     }
-    const url = `${process.env.API_URL}/api/runes/${rune.type.toLowerCase()}/${rune._id}`;
+    const url = `${apiUrl}/api/runes/${rune.type.toLowerCase()}/${rune._id}`;
 
     try {
       await axios.delete(url);
