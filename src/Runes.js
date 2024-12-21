@@ -462,18 +462,16 @@ const Runes = () => {
 
               <div className="form-group text-left">
                 <label htmlFor="runeType" className="d-block text-left">Type</label>
-                <select 
-                  id="runeType" 
-                  className="form-control" 
-                  value={runeType} 
-                  onChange={(e) => setRuneType(e.target.value)} 
-                  required
-                >
-                  <option value="">Select Type</option>
-                  <option value="IP">IP</option>
-                  <option value="URL">URL</option>
-                  <option value="Domain">Domain</option>
-                </select>
+                <Dropdown onSelect={(eventKey) => setSelectedType(eventKey)}>
+                  <Dropdown.Toggle variant="secondary" id="dropdown-basic">
+                    {selectedType || "Select"}
+                  </Dropdown.Toggle>
+                  <Dropdown.Menu>
+                    <Dropdown.Item eventKey="IP">IP</Dropdown.Item>
+                    <Dropdown.Item eventKey="URL">URL</Dropdown.Item>
+                    <Dropdown.Item eventKey="Domain">Domain</Dropdown.Item>
+                  </Dropdown.Menu>
+                </Dropdown>
               </div>
               <div className="form-group text-left">
                 <label htmlFor="runeExpires" className="d-block text-left">Expires</label>
