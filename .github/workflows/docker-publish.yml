@@ -2,7 +2,7 @@ name: Docker
 
 on:
   release:
-    types: ["created", "released", "prereleased"]
+    types: ["published", "created", "released", "prereleased"]
   pull_request:
     branches: [ "main" ]
 
