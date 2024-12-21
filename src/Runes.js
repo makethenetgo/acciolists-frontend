@@ -3,6 +3,7 @@ import axios from 'axios';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import moment from 'moment';
+import { Dropdown } from 'react-bootstrap';
 
 const Runes = () => {
   const [runes, setRunes] = useState([]);
@@ -25,6 +26,8 @@ const Runes = () => {
   const [updateTagInput, setUpdateTagInput] = useState('');
   const [updateFilteredTags, setUpdateFilteredTags] = useState([]);
   const [updateSelectedTags, setUpdateSelectedTags] = useState([]);
+  const [selectedType, setSelectedType] = useState(''); // Initialize with an empty string or a default type
+
 
   useEffect(() => {
     fetchRunes();
@@ -187,40 +190,46 @@ const Runes = () => {
     }
 
     if (changesDetected) {
-        try {
-            console.log("payload:", payload);
-            const response = await axios.put(`${process.env.API_URL}/api/runes/${updatedRune.type.toLowerCase()}/${updatedRune._id}`, payload);
-            console.log('Rune updated:', response.data);
-
-            setRunes(prevRunes =>
-                prevRunes.map(rune => {
-                    if (rune._id === updatedRune._id) {
-                        return {
-                            ...rune,
-                            ...response.data,
-                            tags: updateSelectedTags // Correctly update tags
-                        };
-                    }
-                    return rune;
-                })
-            );
-
-            closeEditModal();
-        } catch (error) {
-            console.error('Error updating rune:', error);
-            if (error.response) {
-                console.error("Server responded with status code:", error.response.status);
-                console.error("Response data:", error.response.data);
-            } else if (error.request) {
-                console.error("No response received:", error.request);
-            } else {
-                console.error("Error setting up the request:", error.message);
-            }
-        }
-    } else {
-        console.log("No changes detected.");
-        closeEditModal();
-    }
+      try {
+          console.log("payload:", payload);
+          const response = await axios.put(`${process.env.API_URL}/api/runes/${updatedRune.type.toLowerCase()}/${updatedRune._id}`, payload);
+          console.log('Rune updated:', response.data);
+  
+          // Update the runes state with the response data
+          setRunes(prevRunes =>
+              prevRunes.map(rune => {
+                  console.log('Checking rune:', rune._id, updatedRune._id);
+                  if (rune._id === updatedRune._id) {
+                      console.log('Updating rune with:', response.data);
+                      return {
+                          ...rune, // spread the old rune data
+                          ...response.data, // apply the updated rune data
+                          tags: updateSelectedTags, // ensure the updated tags are applied
+                          expiration_date_display: response.data.expiration_date 
+                              ? moment.utc(response.data.expiration_date).local().format('MMM DD, YYYY')
+                              : "Never", // ensure formatted date for display
+                      };
+                  }
+                  return rune; // return the unchanged rune
+              })
+          );
+  
+          closeEditModal();
+      } catch (error) {
+          console.error('Error updating rune:', error);
+          if (error.response) {
+              console.error("Server responded with status code:", error.response.status);
+              console.error("Response data:", error.response.data);
+          } else if (error.request) {
+              console.error("No response received:", error.request);
+          } else {
+              console.error("Error setting up the request:", error.message);
+          }
+      }
+  } else {
+      console.log("No changes detected.");
+      closeEditModal();
+  }  
 };
 
   const fetchTags = async () => {
@@ -235,7 +244,7 @@ const Runes = () => {
   const handleCreateSubmit = async (e) => {
     e.preventDefault();
     const newRune = document.getElementById('newRune').value.trim();
-    const runeEndpoint = `${process.env.API_URL}/api/runes/${runeType.toLowerCase()}`;
+    const runeEndpoint = `${process.env.API_URL}/api/runes/${selectedType.toLowerCase()}`;
 
     try {
       const requestBody = {
