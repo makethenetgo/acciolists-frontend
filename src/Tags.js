@@ -8,14 +8,15 @@ const Tags = () => {
   const [showCreatePicker, setShowCreatePicker] = useState(false);
   const createPickerRef = useRef(null);
   const createPickerButtonRef = useRef(null);
-
   const [tags, setTags] = useState([]);
   const [pickerStates, setPickerStates] = useState(new Map());
   const [tempColors, setTempColors] = useState(new Map());
+  const apiUrl = process.env.API_URL || "";
+
 
   const fetchTags = async () => {
     try {
-      const response = await axios.get(`${process.env.API_URL}/api/tags`);
+      const response = await axios.get(`${apiUrl}/api/tags`);
       setTags(response.data);
       const initialPickerStates = new Map();
       const initialTempColors = new Map();
@@ -58,7 +59,7 @@ const Tags = () => {
     e.preventDefault();
     const newTag = document.getElementById('newTag').value;
     try {
-      const response = await axios.post(`${process.env.API_URL}/api/tags`, { name: newTag, color: createColor });
+      const response = await axios.post(`${apiUrl}/api/tags`, { name: newTag, color: createColor });
       console.log('Tag created:', response.data);
       fetchTags();  // Call fetchTags to refresh the list
     } catch (error) {
@@ -74,7 +75,7 @@ const Tags = () => {
 
   const updateTagColor = async (tagId) => {
     try {
-      await axios.put(`${process.env.API_URL}/api/tags/${tagId}`, { color: tempColors.get(tagId) });
+      await axios.put(`${apiUrl}/api/tags/${tagId}`, { color: tempColors.get(tagId) });
       console.log('Color updated');
       fetchTags();
     } catch (error) {
@@ -164,7 +165,7 @@ const Tags = () => {
                     <td className="align-middle">
                       <div className="d-flex justify-content-around w-100">
                         <button onClick={() => updateTagColor(tag._id)} className="btn btn-success">Update</button>
-                        <button onClick={() => axios.delete(`${process.env.API_URL}/api/tags/${tag._id}`).then(fetchTags)} className="btn btn-danger">Delete</button>
+                        <button onClick={() => axios.delete(`${apiUrl}/api/tags/${tag._id}`).then(fetchTags)} className="btn btn-danger">Delete</button>
                       </div>
                     </td>
                   </tr>
