@@ -4,7 +4,7 @@ import { BrowserRouter as Router, Route, Link, Routes } from 'react-router-dom';
 import './App.css';
 import Tags from './Tags';
 import Runes from './Runes';
-import Scrolls from './Scrolls';
+import Scrolls from './scrolls';
 
 function App() {
   return (
