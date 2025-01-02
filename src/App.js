@@ -4,6 +4,7 @@ import { BrowserRouter as Router, Route, Link, Routes } from 'react-router-dom';
 import './App.css';
 import Tags from './Tags';
 import Runes from './Runes';
+import Scrolls from './Scrolls';
 
 function App() {
   return (
@@ -24,6 +25,7 @@ function App() {
         <Routes>
           <Route path="/tags" element={<Tags />} />
           <Route path="/runes" element={<Runes />} />
+          <Route path="/scrolls" element={<Scrolls />} />
         </Routes>
       </div>
     </Router>
