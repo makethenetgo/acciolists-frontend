@@ -5,6 +5,7 @@ import './App.css';
 import Tags from './Tags';
 import Runes from './Runes';
 import Scrolls from './scrolls';
+import Dashboard from './Dashboard';
 
 function App() {
   return (
@@ -23,6 +24,7 @@ function App() {
         </Navbar>
 
         <Routes>
+          <Route path="/" element={<Dashboard />} exact />
           <Route path="/tags" element={<Tags />} />
           <Route path="/runes" element={<Runes />} />
           <Route path="/scrolls" element={<Scrolls />} />
