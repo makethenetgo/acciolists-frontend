@@ -15,7 +15,7 @@
     "react-color": "^2.19.3",
     "react-datepicker": "^6.9.0",
     "react-dom": "^18.3.1",
-    "react-router-dom": "^6.23.0",
+    "react-router-dom": "^7.5.2",
     "url-loader": "^4.1.1",
     "web-vitals": "^2.1.4"
   },
