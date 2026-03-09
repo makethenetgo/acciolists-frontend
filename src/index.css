@@ -1,44 +1,97 @@
+html,
+body,
+#root {
+  height: 100%;
+}
+
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  background:
+    radial-gradient(circle at top, rgba(47, 111, 237, 0.08), transparent 40%),
+    linear-gradient(180deg, #f4f7fb 0%, #ebf0f7 100%);
 }
 
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+a {
+  text-decoration: none;
 }
 
-.hidden {
-  display: none;
+.acciolists-root {
+  min-height: 100%;
 }
 
-.modal {
-  position: fixed;
-  left: 0;
+#acciolists-top-nav {
+  position: sticky;
   top: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 1002;
+}
+
+.acciolists-layout {
+  min-height: calc(100vh - 64px);
+}
+
+.acciolists-page {
+  padding-bottom: 32px;
+}
+
+.acciolists-pill-row {
   display: flex;
-  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.acciolists-tag-pill {
+  display: inline-flex;
   align-items: center;
-  z-index: 1000;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.3;
+  box-shadow: inset 0 0 0 1px rgba(15, 20, 26, 0.08);
 }
 
-.modal-content {
-  background: white;
-  padding: 20px;
-  border-radius: 5px;
-  width: 50%;
-  max-width: 600px;
+.acciolists-metric-value {
+  font-size: 32px;
+  font-weight: 800;
+  line-height: 1.1;
+  color: #0f1b2a;
 }
 
-.close-button {
-  float: right;
-  font-size: 1.5rem;
-  font-weight: bold;
+.acciolists-native-input-wrapper {
+  width: 100%;
+}
+
+.acciolists-native-input {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 36px;
+  border: 1px solid #879596;
+  border-radius: 10px;
+  padding: 0 12px;
+  background: #ffffff;
+  color: #0f1b2a;
+  font: inherit;
+}
+
+.acciolists-native-input:focus {
+  outline: 2px solid #0972d3;
+  outline-offset: 1px;
+}
+
+.acciolists-native-input--color {
+  padding: 4px;
+  min-width: 88px;
+}
+
+.acciolists-color-preview {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.acciolists-color-swatch {
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  border: 1px solid rgba(15, 20, 26, 0.12);
 }
