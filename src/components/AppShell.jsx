@@ -1,134 +1,81 @@
-import React, { useState } from 'react';
-import {
-  AppLayout,
-  BreadcrumbGroup,
-  SideNavigation,
-  TopNavigation,
-} from '@cloudscape-design/components';
-import { Route, Routes, useLocation, useNavigate } from 'react-router-dom';
+import React from 'react';
+import { Navigate, NavLink, Route, Routes } from 'react-router-dom';
+import { useAuth } from '../AuthProvider';
 import Dashboard from '../Dashboard';
 import Runes from '../Runes';
 import Scrolls from '../scrolls';
 import Tags from '../Tags';
+import Users from '../Users';
 
-const navigationItems = [
-  {
-    type: 'section',
-    text: 'Workspace',
-    items: [
-      { type: 'link', text: 'Overview', href: '/' },
-      { type: 'link', text: 'Runes', href: '/runes' },
-      { type: 'link', text: 'Scrolls', href: '/manage/scrolls' },
-      { type: 'link', text: 'Tags', href: '/tags' },
-    ],
-  },
-];
+const navigationItems = isAdmin =>
+  [
+    { href: '/', label: 'Overview', exact: true },
+    { href: '/runes', label: 'Runes' },
+    { href: '/manage/scrolls', label: 'Scrolls' },
+    { href: '/tags', label: 'Tags' },
+    isAdmin ? { href: '/users', label: 'Users' } : null,
+  ].filter(Boolean);
 
-const routeMetadata = {
-  '/': {
-    title: 'Overview',
-  },
-  '/runes': {
-    title: 'Runes',
-  },
-  '/manage/scrolls': {
-    title: 'Scrolls',
-  },
-  '/tags': {
-    title: 'Tags',
-  },
-};
+function navClassName({ isActive }) {
+  return `site-nav-link${isActive ? ' is-active' : ''}`;
+}
 
 export default function AppShell() {
-  const location = useLocation();
-  const navigate = useNavigate();
-  const [navigationOpen, setNavigationOpen] = useState(true);
-
-  const activeHref =
-    location.pathname.startsWith('/manage/scrolls') ? '/manage/scrolls' : location.pathname;
-
-  const handleFollow = event => {
-    const href = event.detail?.href;
-
-    if (!href) {
-      return;
-    }
-
-    event.preventDefault();
-    navigate(href);
-  };
-
-  const breadcrumbItems =
-    activeHref === '/'
-      ? [{ text: 'Overview', href: '/' }]
-      : [
-          { text: 'Overview', href: '/' },
-          {
-            text: routeMetadata[activeHref]?.title || 'Workspace',
-            href: activeHref,
-          },
-        ];
+  const { isAdmin, logout, user } = useAuth();
 
   return (
-    <div className="acciolists-root">
-      <div id="acciolists-top-nav">
-        <TopNavigation
-          identity={{
-            href: '/',
-            title: 'AccioLists',
-            onFollow: handleFollow,
-          }}
-          utilities={[
-            {
-              type: 'button',
-              text: 'API docs',
-              iconName: 'external',
-              href: '/api/docs',
-              external: true,
-              externalIconAriaLabel: 'Opens the API docs in a new tab',
-            },
-          ]}
-          i18nStrings={{
-            overflowMenuBackIconAriaLabel: 'Back',
-            overflowMenuDismissIconAriaLabel: 'Close menu',
-            overflowMenuTitleText: 'All navigation',
-            overflowMenuTriggerText: 'Open navigation menu',
-          }}
-        />
-      </div>
-      <div className="acciolists-layout">
-        <AppLayout
-          headerSelector="#acciolists-top-nav"
-          contentType="default"
-          navigationOpen={navigationOpen}
-          onNavigationChange={({ detail }) => setNavigationOpen(detail.open)}
-          navigation={
-            <SideNavigation
-              activeHref={activeHref}
-              header={{
-                href: '/',
-                text: 'AccioLists',
-              }}
-              items={navigationItems}
-              onFollow={handleFollow}
-            />
-          }
-          breadcrumbs={<BreadcrumbGroup items={breadcrumbItems} onFollow={handleFollow} />}
-          toolsHide
-          maxContentWidth={Number.MAX_VALUE}
-          content={
-            <div className="acciolists-page">
-              <Routes>
-                <Route path="/" element={<Dashboard />} />
-                <Route path="/runes" element={<Runes />} />
-                <Route path="/manage/scrolls" element={<Scrolls />} />
-                <Route path="/tags" element={<Tags />} />
-                <Route path="*" element={<Dashboard />} />
-              </Routes>
-            </div>
-          }
-        />
-      </div>
+    <div className="control-plane">
+      <div className="control-plane__glow control-plane__glow--left" aria-hidden="true" />
+      <div className="control-plane__glow control-plane__glow--right" aria-hidden="true" />
+
+      <header className="site-header app-header">
+        <NavLink className="site-brand app-brand" to="/">
+          <span className="app-brand__mark">AL</span>
+          <span className="app-brand__copy">
+            <span className="app-brand__title">AccioLists</span>
+            <span className="app-brand__subtitle">Rune inventory and scroll publication</span>
+          </span>
+        </NavLink>
+
+        <nav className="site-nav app-nav" aria-label="Primary">
+          {navigationItems(isAdmin).map(item => (
+            <NavLink
+              key={item.href}
+              className={navClassName}
+              end={item.exact}
+              to={item.href}
+            >
+              {item.label}
+            </NavLink>
+          ))}
+        </nav>
+
+        <div className="app-header__utility">
+          <span className="app-user-badge">{user?.username || 'Authenticated user'}</span>
+          <a
+            className="site-nav-link"
+            href="/api/docs"
+            rel="noreferrer"
+            target="_blank"
+          >
+            API docs
+          </a>
+          <button className="site-nav-link app-header__logout" onClick={logout} type="button">
+            Sign out
+          </button>
+        </div>
+      </header>
+
+      <main className="app-shell">
+        <Routes>
+          <Route path="/" element={<Dashboard />} />
+          <Route path="/runes" element={<Runes />} />
+          <Route path="/manage/scrolls" element={<Scrolls />} />
+          <Route path="/tags" element={<Tags />} />
+          <Route path="/users" element={isAdmin ? <Users /> : <Navigate replace to="/" />} />
+          <Route path="*" element={<Dashboard />} />
+        </Routes>
+      </main>
     </div>
   );
 }

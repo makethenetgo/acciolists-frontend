@@ -1,10 +1,31 @@
 import axios from 'axios';
 
 export const apiUrl = import.meta.env.VITE_API_URL || '';
+let accessTokenResolver = async () => null;
 
 export const api = axios.create({
   baseURL: apiUrl,
 });
+
+api.interceptors.request.use(async config => {
+  const nextConfig = { ...config };
+
+  if (!nextConfig.headers?.Authorization) {
+    const accessToken = await accessTokenResolver();
+    if (accessToken) {
+      nextConfig.headers = {
+        ...(nextConfig.headers || {}),
+        Authorization: `Bearer ${accessToken}`,
+      };
+    }
+  }
+
+  return nextConfig;
+});
+
+export function setAccessTokenResolver(resolver) {
+  accessTokenResolver = resolver || (async () => null);
+}
 
 const dateFormatter = new Intl.DateTimeFormat('en-US', {
   month: 'short',
@@ -81,7 +102,7 @@ export function getTagOptions(tags) {
   return tags.map(tag => ({
     label: tag.name,
     value: tag.name,
-    description: tag.color || 'No color assigned',
+    color: tag.color || '#7df9c5',
   }));
 }
 
