@@ -4,6 +4,12 @@ on:
   workflow_run:
     workflows: ["Release"]
     types: [completed]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag to publish
+        required: true
+        type: string
 
 env:
   REGISTRY: ghcr.io
@@ -11,7 +17,7 @@ env:
 
 jobs:
   publish:
-    if: github.event.workflow_run.conclusion == 'success'
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     permissions:
       actions: read
@@ -22,6 +28,7 @@ jobs:
 
     steps:
       - name: Download release metadata
+        if: github.event_name == 'workflow_run'
         uses: actions/download-artifact@v4
         with:
           name: release-metadata
@@ -34,6 +41,14 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            tag="${{ inputs.tag }}"
+            echo "publish=true" >> "$GITHUB_OUTPUT"
+            echo "tag=$tag" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
           source .release-metadata/release-metadata.env
 
           if [ "${published:-false}" != "true" ] || [ -z "${tag:-}" ]; then
@@ -50,6 +65,12 @@ jobs:
         with:
           ref: refs/tags/${{ steps.release.outputs.tag }}
           fetch-depth: 0
+
+      - name: Resolve release revision
+        if: steps.release.outputs.publish == 'true'
+        id: revision
+        shell: bash
+        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
 
       - name: Set up Docker Buildx
         if: steps.release.outputs.publish == 'true'
@@ -74,7 +95,7 @@ jobs:
             type=raw,value=latest
           labels: |
             org.opencontainers.image.version=${{ steps.release.outputs.tag }}
-            org.opencontainers.image.revision=${{ github.event.workflow_run.head_sha }}
+            org.opencontainers.image.revision=${{ steps.revision.outputs.sha }}
 
       - name: Build and push Docker image
         if: steps.release.outputs.publish == 'true'
@@ -91,7 +112,7 @@ jobs:
 
       - name: Install Cosign
         if: steps.release.outputs.publish == 'true'
-        uses: sigstore/cosign-installer@v4
+        uses: sigstore/cosign-installer@v4.1.0
 
       - name: Sign container image
         if: steps.release.outputs.publish == 'true'
