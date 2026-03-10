@@ -33,7 +33,7 @@ export default function TagPill({ tag }) {
 
   return (
     <span
-      className="acciolists-tag-pill"
+      className="tag-pill"
       style={{
         backgroundColor,
         color: getReadableTextColor(backgroundColor),

@@ -1,29 +1,20 @@
 import React, { useEffect, useState } from 'react';
+import ExpandableTagList from './components/ExpandableTagList';
 import {
-  Box,
   Button,
-  ColumnLayout,
-  Container,
-  ContentLayout,
-  Flashbar,
-  FormField,
-  Header,
-  Input,
-  Link,
+  DataTable,
+  Field,
+  FlashMessages,
   Modal,
-  Multiselect,
-  Select,
-  SpaceBetween,
-  Table,
-  TextFilter,
-} from '@cloudscape-design/components';
-import TagPill from './components/TagPill';
+  PageHero,
+  Panel,
+  TagSelector,
+} from './components/ui';
 import {
   api,
   buildTagLookup,
   getErrorMessage,
   getTagOptions,
-  selectTagOptions,
   typeLabel,
   typeOptions,
 } from './lib/api';
@@ -31,7 +22,7 @@ import {
 function createScrollForm() {
   return {
     name: '',
-    type: null,
+    type: 'ip',
     includeTags: [],
     excludeTags: [],
   };
@@ -49,13 +40,8 @@ function normalizeScrolls(tags, scrolls) {
   }));
 }
 
-function filterSelectableTags(options, lockedOptions, selectedOptions) {
-  const lockedValues = new Set(lockedOptions.map(option => option.value));
-  const selectedValues = new Set(selectedOptions.map(option => option.value));
-
-  return options.filter(
-    option => !lockedValues.has(option.value) || selectedValues.has(option.value)
-  );
+function toggleValue(values, value) {
+  return values.includes(value) ? values.filter(item => item !== value) : [...values, value];
 }
 
 export default function Scrolls() {
@@ -69,29 +55,10 @@ export default function Scrolls() {
   const [editForm, setEditForm] = useState(createScrollForm());
 
   const tagOptions = getTagOptions(tags);
-  const createIncludeOptions = filterSelectableTags(
-    tagOptions,
-    createForm.excludeTags,
-    createForm.includeTags
-  );
-  const createExcludeOptions = filterSelectableTags(
-    tagOptions,
-    createForm.includeTags,
-    createForm.excludeTags
-  );
-  const editIncludeOptions = filterSelectableTags(
-    tagOptions,
-    editForm.excludeTags,
-    editForm.includeTags
-  );
-  const editExcludeOptions = filterSelectableTags(
-    tagOptions,
-    editForm.includeTags,
-    editForm.excludeTags
-  );
 
   const loadScrolls = async () => {
     setLoading(true);
+
     try {
       const [tagsResponse, scrollsResponse] = await Promise.all([
         api.get('/api/tags'),
@@ -134,7 +101,7 @@ export default function Scrolls() {
   });
 
   const createScroll = async () => {
-    if (!createForm.name.trim() || !createForm.type?.value) {
+    if (!createForm.name.trim() || !createForm.type) {
       setFlashItems([
         {
           id: 'scrolls-create-validation',
@@ -149,9 +116,9 @@ export default function Scrolls() {
     try {
       await api.post('/api/scrolls', {
         name: createForm.name.trim(),
-        type: createForm.type.value,
-        include_tags: createForm.includeTags.map(option => option.value),
-        exclude_tags: createForm.excludeTags.map(option => option.value),
+        type: createForm.type,
+        include_tags: createForm.includeTags,
+        exclude_tags: createForm.excludeTags,
       });
       setCreateForm(createScrollForm());
       setFlashItems([
@@ -179,9 +146,9 @@ export default function Scrolls() {
     setEditScroll(scroll);
     setEditForm({
       name: scroll.name,
-      type: typeOptions.find(option => option.value === scroll.type) || null,
-      includeTags: selectTagOptions(tags, scroll.includeTagNames),
-      excludeTags: selectTagOptions(tags, scroll.excludeTagNames),
+      type: scroll.type,
+      includeTags: scroll.includeTagNames,
+      excludeTags: scroll.excludeTagNames,
     });
   };
 
@@ -191,16 +158,16 @@ export default function Scrolls() {
   };
 
   const updateScroll = async () => {
-    if (!editScroll || !editForm.type?.value) {
+    if (!editScroll || !editForm.type) {
       return;
     }
 
     try {
       await api.put(`/api/scrolls/${editScroll._id}`, {
         name: editForm.name.trim(),
-        type: editForm.type.value,
-        include_tags: editForm.includeTags.map(option => option.value),
-        exclude_tags: editForm.excludeTags.map(option => option.value),
+        type: editForm.type,
+        include_tags: editForm.includeTags,
+        exclude_tags: editForm.excludeTags,
       });
       setFlashItems([
         {
@@ -249,238 +216,263 @@ export default function Scrolls() {
   };
 
   return (
-    <ContentLayout
-      header={
-        <Header
-          variant="h1"
-          description="Assemble materialized lists from rune tags and publish them as generated scroll artifacts."
-          actions={
-            <Button loading={loading} onClick={loadScrolls}>
-              Refresh
-            </Button>
-          }
-        >
-          Scrolls
-        </Header>
-      }
-    >
-      <SpaceBetween size="l">
-        {flashItems.length > 0 && <Flashbar items={flashItems} />}
+    <div className="page-stack">
+      <PageHero
+        actions={
+          <Button loading={loading} onClick={loadScrolls} variant="primary">
+            Refresh scrolls
+          </Button>
+        }
+        description="Assemble durable published artifacts from tag rules, keep the edge path readable, and maintain the exact include and exclude contract."
+        eyebrow="Scroll publication"
+        title="Materialize the lists you want users to reach even when the backend is stressed."
+      >
+        <div className="hero-note-list">
+          <span className="hero-note">Artifact-first publication</span>
+          <span className="hero-note">Include and exclude tag control</span>
+        </div>
+      </PageHero>
 
-        <ColumnLayout columns={2} variant="text-grid">
-          <Container header={<Header variant="h2">Create scroll</Header>}>
-            <SpaceBetween size="m">
-              <FormField label="Scroll name">
-                <Input
-                  value={createForm.name}
-                  onChange={({ detail }) =>
-                    setCreateForm(current => ({ ...current, name: detail.value }))
-                  }
-                  placeholder="Enter a scroll name"
-                />
-              </FormField>
-              <FormField label="Rune type">
-                <Select
-                  selectedOption={createForm.type}
-                  options={typeOptions}
-                  onChange={({ detail }) =>
-                    setCreateForm(current => ({ ...current, type: detail.selectedOption }))
-                  }
-                  placeholder="Choose the rune inventory"
-                />
-              </FormField>
-              <FormField label="Include tags">
-                <Multiselect
-                  selectedOptions={createForm.includeTags}
-                  options={createIncludeOptions}
-                  onChange={({ detail }) =>
-                    setCreateForm(current => ({
-                      ...current,
-                      includeTags: detail.selectedOptions,
-                    }))
-                  }
-                  placeholder="Select tags that should be included"
-                />
-              </FormField>
-              <FormField label="Exclude tags">
-                <Multiselect
-                  selectedOptions={createForm.excludeTags}
-                  options={createExcludeOptions}
-                  onChange={({ detail }) =>
-                    setCreateForm(current => ({
-                      ...current,
-                      excludeTags: detail.selectedOptions,
-                    }))
-                  }
-                  placeholder="Select tags that should be excluded"
-                />
-              </FormField>
-              <Button variant="primary" onClick={createScroll}>
+      <FlashMessages items={flashItems} />
+
+      <section className="page-grid page-grid--two">
+        <Panel
+          copy="Each scroll selects a rune inventory, includes the tags you want, then carves out exceptions with explicit excludes."
+          kicker="Create scroll"
+          title="Define publication rules"
+        >
+          <div className="form-grid">
+            <Field label="Scroll name">
+              <input
+                className="control-input"
+                onChange={event =>
+                  setCreateForm(current => ({ ...current, name: event.target.value }))
+                }
+                placeholder="Enter a scroll name"
+                type="text"
+                value={createForm.name}
+              />
+            </Field>
+
+            <Field label="Rune type">
+              <div className="segmented-control">
+                {typeOptions.map(option => (
+                  <button
+                    key={option.value}
+                    aria-pressed={createForm.type === option.value}
+                    className={`segmented-control__item${
+                      createForm.type === option.value ? ' is-active' : ''
+                    }`}
+                    onClick={() =>
+                      setCreateForm(current => ({ ...current, type: option.value }))
+                    }
+                    type="button"
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            </Field>
+
+            <Field hint="These tags must be present on a rune for it to land in the published file." label="Include tags">
+              <TagSelector
+                disabledValues={createForm.excludeTags}
+                onToggle={value =>
+                  setCreateForm(current => ({
+                    ...current,
+                    includeTags: toggleValue(current.includeTags, value),
+                  }))
+                }
+                options={tagOptions}
+                selectedValues={createForm.includeTags}
+              />
+            </Field>
+
+            <Field hint="Use excludes to carve exceptions out of an otherwise eligible source set." label="Exclude tags">
+              <TagSelector
+                disabledValues={createForm.includeTags}
+                onToggle={value =>
+                  setCreateForm(current => ({
+                    ...current,
+                    excludeTags: toggleValue(current.excludeTags, value),
+                  }))
+                }
+                options={tagOptions}
+                selectedValues={createForm.excludeTags}
+              />
+            </Field>
+
+            <div className="panel-footer">
+              <Button onClick={createScroll} variant="primary">
                 Create scroll
               </Button>
-            </SpaceBetween>
-          </Container>
+            </div>
+          </div>
+        </Panel>
 
-          <Container header={<Header variant="h2">Publication model</Header>}>
-            <SpaceBetween size="m">
-              <Box color="text-body-secondary">
-                Scrolls are generated artifacts. Include tags define the source set, exclude tags carve out exceptions, and the published file remains available even if the API is offline.
-              </Box>
-              <Box variant="awsui-key-label">Artifact path pattern</Box>
-              <Box>/scrolls/&lt;scroll-name&gt;</Box>
-            </SpaceBetween>
-          </Container>
-        </ColumnLayout>
-
-        <Container
-          header={
-            <Header variant="h2" counter={`(${filteredScrolls.length})`}>
-              Published scrolls
-            </Header>
-          }
+        <Panel
+          copy="Published files should keep resolving from the web tier even if the API or database are down."
+          kicker="Artifact contract"
+          title="How scrolls are served"
         >
-          <Table
-            items={filteredScrolls}
-            loading={loading}
-            loadingText="Loading scrolls"
-            wrapLines
-            empty={
-              <Box textAlign="center" color="text-body-secondary">
-                No scrolls match the current filters.
-              </Box>
-            }
-            filter={
-              <TextFilter
-                filteringText={searchText}
-                filteringPlaceholder="Find scrolls by name, type, or tag"
-                filteringAriaLabel="Filter scrolls"
-                countText={`${filteredScrolls.length} matches`}
-                onChange={({ detail }) => setSearchText(detail.filteringText)}
-              />
-            }
-            columnDefinitions={[
-              {
-                id: 'name',
-                header: 'Scroll',
-                cell: item => item.name,
-              },
-              {
-                id: 'type',
-                header: 'Type',
-                cell: item => typeLabel(item.type),
-              },
-              {
-                id: 'include',
-                header: 'Include tags',
-                cell: item =>
-                  item.includeTagDetails.length > 0 ? (
-                    <div className="acciolists-pill-row">
-                      {item.includeTagDetails.map(tag => (
-                        <TagPill key={`${item._id}-include-${tag.name}`} tag={tag} />
-                      ))}
-                    </div>
-                  ) : (
-                    <Box color="text-body-secondary">No include tags</Box>
-                  ),
-              },
-              {
-                id: 'exclude',
-                header: 'Exclude tags',
-                cell: item =>
-                  item.excludeTagDetails.length > 0 ? (
-                    <div className="acciolists-pill-row">
-                      {item.excludeTagDetails.map(tag => (
-                        <TagPill key={`${item._id}-exclude-${tag.name}`} tag={tag} />
-                      ))}
-                    </div>
-                  ) : (
-                    <Box color="text-body-secondary">No exclude tags</Box>
-                  ),
-              },
-              {
-                id: 'actions',
-                header: 'Actions',
-                cell: item => (
-                  <SpaceBetween direction="horizontal" size="xs">
-                    <Link
-                      external
-                      href={`${window.location.origin}/scrolls/${item.name}`}
-                      externalIconAriaLabel="Opens in a new tab"
-                    >
-                      View scroll
-                    </Link>
-                    <Button onClick={() => openEditModal(item)}>Update</Button>
-                    <Button onClick={() => deleteScroll(item)}>Delete</Button>
-                  </SpaceBetween>
-                ),
-              },
-            ]}
-          />
-        </Container>
+          <div className="artifact-box">
+            <p className="artifact-box__label">Published path</p>
+            <code>/scrolls/&lt;scroll-name&gt;</code>
+          </div>
 
-        <Modal
-          visible={Boolean(editScroll)}
-          onDismiss={closeEditModal}
-          header={editScroll ? `Update ${editScroll.name}` : 'Update scroll'}
-          closeAriaLabel="Close scroll modal"
-          footer={
-            <Box float="right">
-              <SpaceBetween direction="horizontal" size="xs">
-                <Button onClick={closeEditModal}>Cancel</Button>
-                <Button variant="primary" onClick={updateScroll}>
-                  Save changes
-                </Button>
-              </SpaceBetween>
-            </Box>
-          }
-        >
-          <SpaceBetween size="m">
-            <FormField label="Scroll name">
-              <Input
-                value={editForm.name}
-                onChange={({ detail }) =>
-                  setEditForm(current => ({ ...current, name: detail.value }))
-                }
-              />
-            </FormField>
-            <FormField label="Rune type">
-              <Select
-                selectedOption={editForm.type}
-                options={typeOptions}
-                onChange={({ detail }) =>
-                  setEditForm(current => ({ ...current, type: detail.selectedOption }))
-                }
-              />
-            </FormField>
-            <FormField label="Include tags">
-              <Multiselect
-                selectedOptions={editForm.includeTags}
-                options={editIncludeOptions}
-                onChange={({ detail }) =>
-                  setEditForm(current => ({
-                    ...current,
-                    includeTags: detail.selectedOptions,
-                  }))
-                }
-                placeholder="Select tags that should be included"
-              />
-            </FormField>
-            <FormField label="Exclude tags">
-              <Multiselect
-                selectedOptions={editForm.excludeTags}
-                options={editExcludeOptions}
-                onChange={({ detail }) =>
-                  setEditForm(current => ({
-                    ...current,
-                    excludeTags: detail.selectedOptions,
-                  }))
-                }
-                placeholder="Select tags that should be excluded"
-              />
-            </FormField>
-          </SpaceBetween>
-        </Modal>
-      </SpaceBetween>
-    </ContentLayout>
+          <Field label="Search current scrolls">
+            <input
+              className="control-input"
+              onChange={event => setSearchText(event.target.value)}
+              placeholder="Filter by name, type, or tag"
+              type="search"
+              value={searchText}
+            />
+          </Field>
+
+          <div className="artifact-box">
+            <p className="artifact-box__label">Visible set</p>
+            <code>
+              {filteredScrolls.length} of {scrolls.length} scrolls
+            </code>
+          </div>
+        </Panel>
+      </section>
+
+      <Panel
+        copy="Open the live artifact directly, or adjust the rule set in place and republish through the API."
+        kicker="Published set"
+        title={`Scrolls (${filteredScrolls.length})`}
+      >
+        <DataTable
+          columns={[
+            {
+              id: 'name',
+              header: 'Scroll',
+              render: item => <span className="table-primary">{item.name}</span>,
+            },
+            {
+              id: 'type',
+              header: 'Type',
+              render: item => <span className="table-mono">{typeLabel(item.type)}</span>,
+            },
+            {
+              id: 'include',
+              header: 'Include tags',
+              render: item => (
+                <ExpandableTagList
+                  emptyLabel="No include tags"
+                  tags={item.includeTagDetails}
+                />
+              ),
+            },
+            {
+              id: 'exclude',
+              header: 'Exclude tags',
+              render: item => (
+                <ExpandableTagList
+                  emptyLabel="No exclude tags"
+                  tags={item.excludeTagDetails}
+                />
+              ),
+            },
+            {
+              id: 'actions',
+              header: 'Actions',
+              render: item => (
+                <div className="table-actions">
+                  <Button href={`${window.location.origin}/scrolls/${item.name}`}>
+                    View scroll
+                  </Button>
+                  <Button onClick={() => openEditModal(item)}>Update</Button>
+                  <Button onClick={() => deleteScroll(item)} variant="danger">
+                    Delete
+                  </Button>
+                </div>
+              ),
+            },
+          ]}
+          emptyMessage="No scrolls match the current filter."
+          loading={loading}
+          loadingMessage="Loading scrolls…"
+          rowKey={item => item._id}
+          rows={filteredScrolls}
+        />
+      </Panel>
+
+      <Modal
+        actions={
+          <>
+            <Button onClick={closeEditModal}>Cancel</Button>
+            <Button onClick={updateScroll} variant="primary">
+              Save changes
+            </Button>
+          </>
+        }
+        kicker="Update scroll"
+        onClose={closeEditModal}
+        open={Boolean(editScroll)}
+        title={editScroll ? editScroll.name : 'Update scroll'}
+      >
+        <div className="form-grid">
+          <Field label="Scroll name">
+            <input
+              className="control-input"
+              onChange={event =>
+                setEditForm(current => ({ ...current, name: event.target.value }))
+              }
+              type="text"
+              value={editForm.name}
+            />
+          </Field>
+
+          <Field label="Rune type">
+            <div className="segmented-control">
+              {typeOptions.map(option => (
+                <button
+                  key={option.value}
+                  aria-pressed={editForm.type === option.value}
+                  className={`segmented-control__item${
+                    editForm.type === option.value ? ' is-active' : ''
+                  }`}
+                  onClick={() => setEditForm(current => ({ ...current, type: option.value }))}
+                  type="button"
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          </Field>
+
+          <Field label="Include tags">
+            <TagSelector
+              disabledValues={editForm.excludeTags}
+              onToggle={value =>
+                setEditForm(current => ({
+                  ...current,
+                  includeTags: toggleValue(current.includeTags, value),
+                }))
+              }
+              options={tagOptions}
+              selectedValues={editForm.includeTags}
+            />
+          </Field>
+
+          <Field label="Exclude tags">
+            <TagSelector
+              disabledValues={editForm.includeTags}
+              onToggle={value =>
+                setEditForm(current => ({
+                  ...current,
+                  excludeTags: toggleValue(current.excludeTags, value),
+                }))
+              }
+              options={tagOptions}
+              selectedValues={editForm.excludeTags}
+            />
+          </Field>
+        </div>
+      </Modal>
+    </div>
   );
 }

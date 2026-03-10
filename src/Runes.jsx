@@ -1,23 +1,15 @@
 import React, { useEffect, useState } from 'react';
+import ExpandableTagList from './components/ExpandableTagList';
 import {
-  Box,
   Button,
-  Checkbox,
-  ColumnLayout,
-  Container,
-  ContentLayout,
-  Flashbar,
-  FormField,
-  Header,
-  Input,
+  DataTable,
+  Field,
+  FlashMessages,
   Modal,
-  Multiselect,
-  Select,
-  SpaceBetween,
-  Table,
-  TextFilter,
-} from '@cloudscape-design/components';
-import TagPill from './components/TagPill';
+  PageHero,
+  Panel,
+  TagSelector,
+} from './components/ui';
 import {
   api,
   buildTagLookup,
@@ -25,7 +17,6 @@ import {
   getErrorMessage,
   getTagOptions,
   normalizeDateInput,
-  selectTagOptions,
   typeLabel,
   typeOptions,
 } from './lib/api';
@@ -34,7 +25,7 @@ function createRuneForm() {
   return {
     name: '',
     tags: [],
-    type: null,
+    type: 'ip',
     expires: false,
     expirationDate: '',
   };
@@ -51,6 +42,10 @@ function normalizeRunes(tags, responses) {
       tagDetails: (rune.tags || []).map(name => tagLookup.get(name) || { name }),
     }))
   );
+}
+
+function toggleValue(values, value) {
+  return values.includes(value) ? values.filter(item => item !== value) : [...values, value];
 }
 
 export default function Runes() {
@@ -72,6 +67,7 @@ export default function Runes() {
 
   const loadRunes = async () => {
     setLoading(true);
+
     try {
       const [tagsResponse, ipResponse, urlResponse, domainResponse] = await Promise.all([
         api.get('/api/tags'),
@@ -126,7 +122,7 @@ export default function Runes() {
   });
 
   const createRune = async () => {
-    if (!createForm.name.trim() || !createForm.type?.value) {
+    if (!createForm.name.trim() || !createForm.type) {
       setFlashItems([
         {
           id: 'runes-create-validation',
@@ -151,9 +147,9 @@ export default function Runes() {
     }
 
     try {
-      await api.post(`/api/runes/${createForm.type.value}`, {
+      await api.post(`/api/runes/${createForm.type}`, {
         name: createForm.name.trim(),
-        tags: createForm.tags.map(option => option.value),
+        tags: createForm.tags,
         expires: createForm.expires,
         expiration_date: createForm.expires ? createForm.expirationDate : null,
       });
@@ -163,7 +159,7 @@ export default function Runes() {
           id: 'runes-create-success',
           type: 'success',
           header: 'Rune created',
-          content: `Added "${createForm.name.trim()}" to the ${typeLabel(createForm.type.value)} inventory.`,
+          content: `Added "${createForm.name.trim()}" to the ${typeLabel(createForm.type)} inventory.`,
         },
       ]);
       await loadRunes();
@@ -183,8 +179,8 @@ export default function Runes() {
     setEditRune(rune);
     setEditForm({
       name: rune.name,
-      tags: selectTagOptions(tags, rune.tagNames || []),
-      type: typeOptions.find(option => option.value === rune.type) || null,
+      tags: rune.tagNames || [],
+      type: rune.type,
       expires: Boolean(rune.expires),
       expirationDate: normalizeDateInput(rune.expiration_date),
     });
@@ -214,7 +210,7 @@ export default function Runes() {
 
     try {
       await api.put(`/api/runes/${editRune.type}/${editRune._id}`, {
-        tags: editForm.tags.map(option => option.value),
+        tags: editForm.tags,
         expires: editForm.expires,
         expiration_date: editForm.expires ? editForm.expirationDate : null,
       });
@@ -265,256 +261,279 @@ export default function Runes() {
   };
 
   return (
-    <ContentLayout
-      header={
-        <Header
-          variant="h1"
-          description="Create, filter, and maintain the rune inventory that feeds scroll generation."
-          actions={
-            <Button loading={loading} onClick={loadRunes}>
-              Refresh
-            </Button>
-          }
-        >
-          Runes
-        </Header>
-      }
-    >
-      <SpaceBetween size="l">
-        {flashItems.length > 0 && <Flashbar items={flashItems} />}
+    <div className="page-stack">
+      <PageHero
+        actions={
+          <Button loading={loading} onClick={loadRunes} variant="primary">
+            Refresh inventory
+          </Button>
+        }
+        description="Create, filter, and maintain the IPs, URLs, and domains that feed every generated scroll."
+        eyebrow="Rune inventory"
+        title="Keep the source set clean before you publish from it."
+      >
+        <div className="hero-note-list">
+          <span className="hero-note">Tag-driven selection</span>
+          <span className="hero-note">Expiration-aware maintenance</span>
+        </div>
+      </PageHero>
 
-        <ColumnLayout columns={2} variant="text-grid">
-          <Container header={<Header variant="h2">Create rune</Header>}>
-            <SpaceBetween size="m">
-              <FormField label="Rune value">
-                <Input
-                  value={createForm.name}
-                  onChange={({ detail }) =>
-                    setCreateForm(current => ({ ...current, name: detail.value }))
-                  }
-                  placeholder="Enter an IP, URL, or domain"
-                />
-              </FormField>
-              <FormField label="Type">
-                <Select
-                  selectedOption={createForm.type}
-                  options={typeOptions}
-                  onChange={({ detail }) =>
-                    setCreateForm(current => ({ ...current, type: detail.selectedOption }))
-                  }
-                  placeholder="Choose a rune type"
-                />
-              </FormField>
-              <FormField label="Tags">
-                <Multiselect
-                  selectedOptions={createForm.tags}
-                  options={tagOptions}
-                  onChange={({ detail }) =>
-                    setCreateForm(current => ({ ...current, tags: detail.selectedOptions }))
-                  }
-                  placeholder="Attach tags"
-                />
-              </FormField>
-              <Checkbox
-                checked={createForm.expires}
-                onChange={({ detail }) =>
+      <FlashMessages items={flashItems} />
+
+      <section className="page-grid page-grid--two">
+        <Panel
+          copy="Create a new rune and attach the tags that should make it eligible for later scroll generation."
+          kicker="Create rune"
+          title="Add inventory"
+        >
+          <div className="form-grid">
+            <Field label="Rune value">
+              <input
+                className="control-input"
+                onChange={event =>
+                  setCreateForm(current => ({ ...current, name: event.target.value }))
+                }
+                placeholder="Enter an IP, URL, or domain"
+                type="text"
+                value={createForm.name}
+              />
+            </Field>
+
+            <Field label="Type">
+              <div className="segmented-control">
+                {typeOptions.map(option => (
+                  <button
+                    key={option.value}
+                    aria-pressed={createForm.type === option.value}
+                    className={`segmented-control__item${
+                      createForm.type === option.value ? ' is-active' : ''
+                    }`}
+                    onClick={() =>
+                      setCreateForm(current => ({ ...current, type: option.value }))
+                    }
+                    type="button"
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            </Field>
+
+            <Field hint="Select every tag that should make this rune discoverable." label="Tags">
+              <TagSelector
+                onToggle={value =>
                   setCreateForm(current => ({
                     ...current,
-                    expires: detail.checked,
-                    expirationDate: detail.checked ? current.expirationDate : '',
+                    tags: toggleValue(current.tags, value),
                   }))
                 }
-              >
-                Rune expires
-              </Checkbox>
-              {createForm.expires && (
-                <FormField label="Expiration date">
-                  <div className="acciolists-native-input-wrapper">
-                    <input
-                      className="acciolists-native-input"
-                      type="date"
-                      value={createForm.expirationDate}
-                      onChange={event =>
-                        setCreateForm(current => ({
-                          ...current,
-                          expirationDate: event.target.value,
-                        }))
-                      }
-                    />
-                  </div>
-                </FormField>
-              )}
-              <Button variant="primary" onClick={createRune}>
+                options={tagOptions}
+                selectedValues={createForm.tags}
+              />
+            </Field>
+
+            <label className="checkbox-row">
+              <input
+                checked={createForm.expires}
+                onChange={event =>
+                  setCreateForm(current => ({
+                    ...current,
+                    expires: event.target.checked,
+                    expirationDate: event.target.checked ? current.expirationDate : '',
+                  }))
+                }
+                type="checkbox"
+              />
+              <span>Rune expires</span>
+            </label>
+
+            {createForm.expires ? (
+              <Field label="Expiration date">
+                <input
+                  className="control-input"
+                  onChange={event =>
+                    setCreateForm(current => ({
+                      ...current,
+                      expirationDate: event.target.value,
+                    }))
+                  }
+                  type="date"
+                  value={createForm.expirationDate}
+                />
+              </Field>
+            ) : null}
+
+            <div className="panel-footer">
+              <Button onClick={createRune} variant="primary">
                 Create rune
               </Button>
-            </SpaceBetween>
-          </Container>
+            </div>
+          </div>
+        </Panel>
 
-          <Container header={<Header variant="h2">Filters</Header>}>
-            <SpaceBetween size="m">
-              <Box color="text-body-secondary">
-                Narrow the rune inventory by data type while searching by value, tag, or expiration.
-              </Box>
-              <SpaceBetween direction="horizontal" size="l">
-                <Checkbox
-                  checked={typeFilters.ip}
-                  onChange={({ detail }) =>
-                    setTypeFilters(current => ({ ...current, ip: detail.checked }))
-                  }
-                >
-                  IP
-                </Checkbox>
-                <Checkbox
-                  checked={typeFilters.url}
-                  onChange={({ detail }) =>
-                    setTypeFilters(current => ({ ...current, url: detail.checked }))
-                  }
-                >
-                  URL
-                </Checkbox>
-                <Checkbox
-                  checked={typeFilters.domain}
-                  onChange={({ detail }) =>
-                    setTypeFilters(current => ({ ...current, domain: detail.checked }))
-                  }
-                >
-                  Domain
-                </Checkbox>
-              </SpaceBetween>
-            </SpaceBetween>
-          </Container>
-        </ColumnLayout>
-
-        <Container
-          header={
-            <Header variant="h2" counter={`(${filteredRunes.length})`}>
-              Rune inventory
-            </Header>
-          }
+        <Panel
+          copy="Use search and type filters together to keep edits tight when the inventory grows."
+          kicker="Filter inventory"
+          title="Cut through the noise"
         >
-          <Table
-            items={filteredRunes}
-            loading={loading}
-            loadingText="Loading runes"
-            wrapLines
-            empty={
-              <Box textAlign="center" color="text-body-secondary">
-                No runes match the current filters.
-              </Box>
-            }
-            filter={
-              <TextFilter
-                filteringText={searchText}
-                filteringPlaceholder="Find runes by value, tag, or type"
-                filteringAriaLabel="Filter runes"
-                countText={`${filteredRunes.length} matches`}
-                onChange={({ detail }) => setSearchText(detail.filteringText)}
+          <div className="form-grid">
+            <Field label="Search">
+              <input
+                className="control-input"
+                onChange={event => setSearchText(event.target.value)}
+                placeholder="Filter by value, tag, type, or expiration"
+                type="search"
+                value={searchText}
               />
-            }
-            columnDefinitions={[
-              {
-                id: 'name',
-                header: 'Rune',
-                cell: item => item.name,
-              },
-              {
-                id: 'type',
-                header: 'Type',
-                cell: item => typeLabel(item.type),
-              },
-              {
-                id: 'tags',
-                header: 'Tags',
-                cell: item =>
-                  item.tagDetails.length > 0 ? (
-                    <div className="acciolists-pill-row">
-                      {item.tagDetails.map(tag => (
-                        <TagPill key={`${item._id}-${tag.name}`} tag={tag} />
-                      ))}
-                    </div>
-                  ) : (
-                    <Box color="text-body-secondary">No tags</Box>
-                  ),
-              },
-              {
-                id: 'expiration',
-                header: 'Expiration',
-                cell: item =>
-                  item.expires ? formatDateForDisplay(item.expiration_date) : 'Never',
-              },
-              {
-                id: 'actions',
-                header: 'Actions',
-                cell: item => (
-                  <SpaceBetween direction="horizontal" size="xs">
-                    <Button onClick={() => openEditModal(item)}>Update</Button>
-                    <Button onClick={() => deleteRune(item)}>Delete</Button>
-                  </SpaceBetween>
-                ),
-              },
-            ]}
-          />
-        </Container>
+            </Field>
 
-        <Modal
-          visible={Boolean(editRune)}
-          onDismiss={closeEditModal}
-          header={editRune ? `Update ${editRune.name}` : 'Update rune'}
-          closeAriaLabel="Close rune modal"
-          footer={
-            <Box float="right">
-              <SpaceBetween direction="horizontal" size="xs">
-                <Button onClick={closeEditModal}>Cancel</Button>
-                <Button variant="primary" onClick={updateRune}>
-                  Save changes
-                </Button>
-              </SpaceBetween>
-            </Box>
-          }
-        >
-          <SpaceBetween size="m">
-            <FormField label="Tags">
-              <Multiselect
-                selectedOptions={editForm.tags}
-                options={tagOptions}
-                onChange={({ detail }) =>
-                  setEditForm(current => ({ ...current, tags: detail.selectedOptions }))
-                }
-                placeholder="Attach tags"
-              />
-            </FormField>
-            <Checkbox
-              checked={editForm.expires}
-              onChange={({ detail }) =>
-                setEditForm(current => ({
-                  ...current,
-                  expires: detail.checked,
-                  expirationDate: detail.checked ? current.expirationDate : '',
-                }))
-              }
-            >
-              Rune expires
-            </Checkbox>
-            {editForm.expires && (
-              <FormField label="Expiration date">
-                <div className="acciolists-native-input-wrapper">
-                  <input
-                    className="acciolists-native-input"
-                    type="date"
-                    value={editForm.expirationDate}
-                    onChange={event =>
-                      setEditForm(current => ({
+            <Field label="Rune types">
+              <div className="segmented-control">
+                {typeOptions.map(option => (
+                  <button
+                    key={option.value}
+                    aria-pressed={typeFilters[option.value]}
+                    className={`segmented-control__item${
+                      typeFilters[option.value] ? ' is-active' : ''
+                    }`}
+                    onClick={() =>
+                      setTypeFilters(current => ({
                         ...current,
-                        expirationDate: event.target.value,
+                        [option.value]: !current[option.value],
                       }))
                     }
-                  />
+                    type="button"
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            </Field>
+
+            <div className="artifact-box">
+              <p className="artifact-box__label">Showing</p>
+              <code>
+                {filteredRunes.length} of {runes.length} runes
+              </code>
+            </div>
+          </div>
+        </Panel>
+      </section>
+
+      <Panel
+        copy="Direct edits happen inline through the API. Use tags to shape eligibility and expiration to phase out stale entries."
+        kicker="Inventory table"
+        title={`Runes (${filteredRunes.length})`}
+      >
+        <DataTable
+          columns={[
+            {
+              id: 'name',
+              header: 'Rune',
+              render: item => <span className="table-primary">{item.name}</span>,
+            },
+            {
+              id: 'type',
+              header: 'Type',
+              render: item => <span className="table-mono">{typeLabel(item.type)}</span>,
+            },
+            {
+              id: 'tags',
+              header: 'Tags',
+              render: item => (
+                <ExpandableTagList emptyLabel="No tags" tags={item.tagDetails} />
+              ),
+            },
+            {
+              id: 'expiration',
+              header: 'Expiration',
+              render: item => (
+                <span className="table-mono">
+                  {item.expires ? formatDateForDisplay(item.expiration_date) : 'Never'}
+                </span>
+              ),
+            },
+            {
+              id: 'actions',
+              header: 'Actions',
+              render: item => (
+                <div className="table-actions">
+                  <Button onClick={() => openEditModal(item)}>Update</Button>
+                  <Button onClick={() => deleteRune(item)} variant="danger">
+                    Delete
+                  </Button>
                 </div>
-              </FormField>
-            )}
-          </SpaceBetween>
-        </Modal>
-      </SpaceBetween>
-    </ContentLayout>
+              ),
+            },
+          ]}
+          emptyMessage="No runes match the current filters."
+          loading={loading}
+          loadingMessage="Loading runes…"
+          rowKey={item => item._id}
+          rows={filteredRunes}
+        />
+      </Panel>
+
+      <Modal
+        actions={
+          <>
+            <Button onClick={closeEditModal}>Cancel</Button>
+            <Button onClick={updateRune} variant="primary">
+              Save changes
+            </Button>
+          </>
+        }
+        kicker="Update rune"
+        onClose={closeEditModal}
+        open={Boolean(editRune)}
+        title={editRune ? editRune.name : 'Update rune'}
+      >
+        <div className="form-grid">
+          <Field label="Tags">
+            <TagSelector
+              onToggle={value =>
+                setEditForm(current => ({
+                  ...current,
+                  tags: toggleValue(current.tags, value),
+                }))
+              }
+              options={tagOptions}
+              selectedValues={editForm.tags}
+            />
+          </Field>
+
+          <label className="checkbox-row">
+            <input
+              checked={editForm.expires}
+              onChange={event =>
+                setEditForm(current => ({
+                  ...current,
+                  expires: event.target.checked,
+                  expirationDate: event.target.checked ? current.expirationDate : '',
+                }))
+              }
+              type="checkbox"
+            />
+            <span>Rune expires</span>
+          </label>
+
+          {editForm.expires ? (
+            <Field label="Expiration date">
+              <input
+                className="control-input"
+                onChange={event =>
+                  setEditForm(current => ({
+                    ...current,
+                    expirationDate: event.target.value,
+                  }))
+                }
+                type="date"
+                value={editForm.expirationDate}
+              />
+            </Field>
+          ) : null}
+        </div>
+      </Modal>
+    </div>
   );
 }
