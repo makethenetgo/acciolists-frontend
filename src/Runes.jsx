@@ -15,6 +15,7 @@ import {
   buildTagLookup,
   formatDateForDisplay,
   getErrorMessage,
+  getRandomTagColor,
   getTagOptions,
   normalizeDateInput,
   typeLabel,
@@ -103,6 +104,57 @@ export default function Runes() {
   useEffect(() => {
     loadRunes();
   }, []);
+
+  const createTagOption = async name => {
+    const trimmedName = name.trim();
+
+    if (!trimmedName) {
+      return null;
+    }
+
+    const color = getRandomTagColor();
+
+    try {
+      const response = await api.post('/api/tags', {
+        name: trimmedName,
+        color,
+      });
+      const createdTag = response.data?.name
+        ? response.data
+        : { name: trimmedName, color };
+
+      setTags(current =>
+        [...current.filter(tag => tag.name !== createdTag.name), createdTag].sort((left, right) =>
+          left.name.localeCompare(right.name)
+        )
+      );
+      setFlashItems([
+        {
+          id: `tag-create-${trimmedName}`,
+          type: 'success',
+          header: 'Tag created',
+          content: `Created the "${trimmedName}" tag with a random color.`,
+        },
+      ]);
+
+      return {
+        label: createdTag.name,
+        value: createdTag.name,
+        color: createdTag.color || color,
+      };
+    } catch (error) {
+      setFlashItems([
+        {
+          id: `tag-create-error-${trimmedName}`,
+          type: 'error',
+          header: 'Tag creation failed',
+          content: getErrorMessage(error, `The "${trimmedName}" tag could not be created.`),
+        },
+      ]);
+
+      return null;
+    }
+  };
 
   const filteredRunes = runes.filter(rune => {
     if (!typeFilters[rune.type]) {
@@ -326,7 +378,9 @@ export default function Runes() {
                     tags: toggleValue(current.tags, value),
                   }))
                 }
+                onCreateOption={createTagOption}
                 options={tagOptions}
+                searchPlaceholder="Search tags or create one"
                 selectedValues={createForm.tags}
               />
             </Field>
@@ -496,7 +550,9 @@ export default function Runes() {
                   tags: toggleValue(current.tags, value),
                 }))
               }
+              onCreateOption={createTagOption}
               options={tagOptions}
+              searchPlaceholder="Search tags or create one"
               selectedValues={editForm.tags}
             />
           </Field>

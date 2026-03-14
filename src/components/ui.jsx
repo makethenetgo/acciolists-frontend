@@ -1,4 +1,4 @@
-import React, { useEffect, useId } from 'react';
+import React, { useEffect, useId, useState } from 'react';
 
 function joinClasses(...values) {
   return values.filter(Boolean).join(' ');
@@ -103,41 +103,115 @@ export function FlashMessages({ items }) {
   );
 }
 
-export function TagSelector({ options, selectedValues, disabledValues = [], onToggle }) {
-  if (!options.length) {
-    return <p className="empty-inline">No tags available yet.</p>;
-  }
-
+export function TagSelector({
+  options,
+  selectedValues,
+  disabledValues = [],
+  onToggle,
+  onCreateOption,
+  searchPlaceholder = 'Search tags',
+}) {
+  const [searchText, setSearchText] = useState('');
+  const [creating, setCreating] = useState(false);
   const selectedSet = new Set(selectedValues);
   const disabledSet = new Set(disabledValues);
+  const normalizedSearch = searchText.trim().toLowerCase();
+  const filteredOptions = normalizedSearch
+    ? options.filter(option => {
+        const label = (option.label || option.value || '').toLowerCase();
+        return label.includes(normalizedSearch);
+      })
+    : options;
+  const exactMatch = normalizedSearch
+    ? options.some(option => {
+        const label = (option.label || '').toLowerCase();
+        const value = (option.value || '').toLowerCase();
+        return label === normalizedSearch || value === normalizedSearch;
+      })
+    : false;
+  const canCreate = Boolean(onCreateOption && normalizedSearch && !exactMatch);
+
+  const handleCreate = async () => {
+    if (!canCreate || creating) {
+      return;
+    }
+
+    setCreating(true);
+
+    try {
+      const createdOption = await onCreateOption(searchText.trim());
+
+      if (createdOption?.value && !selectedSet.has(createdOption.value)) {
+        onToggle(createdOption.value);
+      }
+
+      if (createdOption?.value) {
+        setSearchText('');
+      }
+    } finally {
+      setCreating(false);
+    }
+  };
 
   return (
-    <div className="choice-chip-grid">
-      {options.map(option => {
-        const selected = selectedSet.has(option.value);
-        const disabled = disabledSet.has(option.value) && !selected;
+    <div className="tag-selector">
+      <input
+        className="control-input tag-selector__search"
+        onChange={event => setSearchText(event.target.value)}
+        placeholder={searchPlaceholder}
+        type="search"
+        value={searchText}
+      />
 
-        return (
-          <button
-            key={option.value}
-            aria-pressed={selected}
-            className={joinClasses(
-              'choice-chip',
-              selected && 'is-selected',
-              disabled && 'is-disabled'
-            )}
-            disabled={disabled}
-            onClick={() => onToggle(option.value)}
-            type="button"
-          >
-            <span
-              className="choice-chip__swatch"
-              style={{ backgroundColor: option.color || '#7df9c5' }}
-            />
-            <span className="choice-chip__label">{option.label}</span>
-          </button>
-        );
-      })}
+      {canCreate ? (
+        <Button
+          className="tag-selector__create"
+          disabled={creating}
+          onClick={handleCreate}
+        >
+          {creating ? 'Creating tag...' : `Create "${searchText.trim()}"`}
+        </Button>
+      ) : null}
+
+      {filteredOptions.length ? (
+        <div className="choice-chip-grid">
+          {filteredOptions.map(option => {
+            const selected = selectedSet.has(option.value);
+            const disabled = disabledSet.has(option.value) && !selected;
+
+            return (
+              <button
+                key={option.value}
+                aria-pressed={selected}
+                className={joinClasses(
+                  'choice-chip',
+                  selected && 'is-selected',
+                  disabled && 'is-disabled'
+                )}
+                disabled={disabled}
+                onClick={() => onToggle(option.value)}
+                type="button"
+              >
+                <span
+                  className="choice-chip__swatch"
+                  style={{ backgroundColor: option.color || '#7df9c5' }}
+                />
+                <span className="choice-chip__label">{option.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      ) : (
+        <p className="empty-inline">
+          {options.length
+            ? normalizedSearch
+              ? canCreate
+                ? `No tags match "${searchText.trim()}". Create it above.`
+                : 'No tags match this search.'
+              : 'No tags available yet.'
+            : 'No tags available yet.'}
+        </p>
+      )}
     </div>
   );
 }

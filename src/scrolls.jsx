@@ -14,6 +14,7 @@ import {
   api,
   buildTagLookup,
   getErrorMessage,
+  getRandomTagColor,
   getTagOptions,
   typeLabel,
   typeOptions,
@@ -86,6 +87,57 @@ export default function Scrolls() {
   useEffect(() => {
     loadScrolls();
   }, []);
+
+  const createTagOption = async name => {
+    const trimmedName = name.trim();
+
+    if (!trimmedName) {
+      return null;
+    }
+
+    const color = getRandomTagColor();
+
+    try {
+      const response = await api.post('/api/tags', {
+        name: trimmedName,
+        color,
+      });
+      const createdTag = response.data?.name
+        ? response.data
+        : { name: trimmedName, color };
+
+      setTags(current =>
+        [...current.filter(tag => tag.name !== createdTag.name), createdTag].sort((left, right) =>
+          left.name.localeCompare(right.name)
+        )
+      );
+      setFlashItems([
+        {
+          id: `tag-create-${trimmedName}`,
+          type: 'success',
+          header: 'Tag created',
+          content: `Created the "${trimmedName}" tag with a random color.`,
+        },
+      ]);
+
+      return {
+        label: createdTag.name,
+        value: createdTag.name,
+        color: createdTag.color || color,
+      };
+    } catch (error) {
+      setFlashItems([
+        {
+          id: `tag-create-error-${trimmedName}`,
+          type: 'error',
+          header: 'Tag creation failed',
+          content: getErrorMessage(error, `The "${trimmedName}" tag could not be created.`),
+        },
+      ]);
+
+      return null;
+    }
+  };
 
   const filteredScrolls = scrolls.filter(scroll => {
     const haystack = [
@@ -276,6 +328,7 @@ export default function Scrolls() {
             <Field hint="These tags must be present on a rune for it to land in the published file." label="Include tags">
               <TagSelector
                 disabledValues={createForm.excludeTags}
+                onCreateOption={createTagOption}
                 onToggle={value =>
                   setCreateForm(current => ({
                     ...current,
@@ -283,6 +336,7 @@ export default function Scrolls() {
                   }))
                 }
                 options={tagOptions}
+                searchPlaceholder="Search include tags or create one"
                 selectedValues={createForm.includeTags}
               />
             </Field>
@@ -290,6 +344,7 @@ export default function Scrolls() {
             <Field hint="Use excludes to carve exceptions out of an otherwise eligible source set." label="Exclude tags">
               <TagSelector
                 disabledValues={createForm.includeTags}
+                onCreateOption={createTagOption}
                 onToggle={value =>
                   setCreateForm(current => ({
                     ...current,
@@ -297,6 +352,7 @@ export default function Scrolls() {
                   }))
                 }
                 options={tagOptions}
+                searchPlaceholder="Search exclude tags or create one"
                 selectedValues={createForm.excludeTags}
               />
             </Field>
@@ -446,6 +502,7 @@ export default function Scrolls() {
           <Field label="Include tags">
             <TagSelector
               disabledValues={editForm.excludeTags}
+              onCreateOption={createTagOption}
               onToggle={value =>
                 setEditForm(current => ({
                   ...current,
@@ -453,6 +510,7 @@ export default function Scrolls() {
                 }))
               }
               options={tagOptions}
+              searchPlaceholder="Search include tags or create one"
               selectedValues={editForm.includeTags}
             />
           </Field>
@@ -460,6 +518,7 @@ export default function Scrolls() {
           <Field label="Exclude tags">
             <TagSelector
               disabledValues={editForm.includeTags}
+              onCreateOption={createTagOption}
               onToggle={value =>
                 setEditForm(current => ({
                   ...current,
@@ -467,6 +526,7 @@ export default function Scrolls() {
                 }))
               }
               options={tagOptions}
+              searchPlaceholder="Search exclude tags or create one"
               selectedValues={editForm.excludeTags}
             />
           </Field>
