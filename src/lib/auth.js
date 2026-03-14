@@ -168,9 +168,10 @@ export async function refreshAccessToken(config, refreshToken) {
 }
 
 export function buildLogoutUrl(config, session) {
+  const postLogoutRedirectUri = `${window.location.origin}/`;
   const params = new URLSearchParams({
     client_id: config.ui_client_id,
-    post_logout_redirect_uri: `${resolveFrontendOrigin(config)}/`,
+    post_logout_redirect_uri: postLogoutRedirectUri,
   });
 
   if (session?.idToken) {
