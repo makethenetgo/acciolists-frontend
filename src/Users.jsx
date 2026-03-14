@@ -192,7 +192,6 @@ export default function Users() {
         }
         description="Provision local Keycloak users from the same control-plane surface as the rest of the app. This first pass uses the AccioLists API as the management broker."
         eyebrow="Identity control"
-        title="Create local users before the full login flow lands."
       >
         <div className="hero-note-list">
           <span className="hero-note">
@@ -303,103 +302,103 @@ export default function Users() {
         </Panel>
 
         <Panel
-          copy={authStatus?.bootstrap?.message || 'Bootstrap status has not been loaded yet.'}
-          kicker="Bootstrap status"
-          title="Realm wiring"
+          copy="This table is backed by Keycloak user records exposed through the AccioLists API. Full password reset and role-edit screens can be layered on top of the same endpoints next."
+          kicker="User inventory"
+          title={`Managed users (${users.length})`}
         >
-          <div className="status-list">
-            <div className="status-row">
-              <span
-                className={`status-pill ${
-                  authStatus?.bootstrap?.complete ? 'is-ready' : 'is-warn'
-                }`}
-              >
-                {authStatus?.bootstrap?.complete ? 'Ready' : 'Pending'}
-              </span>
-              <div>
-                <h3>OIDC realm</h3>
-                <p>{authStatus?.issuer_url || 'Issuer URL not configured yet.'}</p>
-              </div>
-            </div>
-            <div className="status-row">
-              <span className="status-pill is-idle">Roles</span>
-              <div>
-                <h3>Available application roles</h3>
-                <p>
-                  {roleOptions.length
-                    ? roleOptions.map(option => option.value).join(', ')
-                    : 'No AccioLists realm roles were found yet.'}
-                </p>
-              </div>
-            </div>
-          </div>
+          <DataTable
+            columns={[
+              {
+                id: 'username',
+                header: 'Username',
+                render: item => <span className="table-primary">{item.username}</span>,
+              },
+              {
+                id: 'identity',
+                header: 'Identity',
+                render: item => (
+                  <div>
+                    <div>{[item.first_name, item.last_name].filter(Boolean).join(' ') || 'No name set'}</div>
+                    <div className="table-secondary">{item.email || 'No email set'}</div>
+                  </div>
+                ),
+              },
+              {
+                id: 'roles',
+                header: 'Roles',
+                render: item => (
+                  <div className="hero-note-list">
+                    {(item.roles || []).length
+                      ? item.roles.map(role => (
+                          <span className="hero-note" key={role}>
+                            {role.replace('acciolists_', '')}
+                          </span>
+                        ))
+                      : <span className="table-secondary">No roles</span>}
+                  </div>
+                ),
+              },
+              {
+                id: 'status',
+                header: 'Status',
+                render: item => (
+                  <span className={`status-pill ${item.enabled ? 'is-ready' : 'is-idle'}`}>
+                    {item.enabled ? 'Enabled' : 'Disabled'}
+                  </span>
+                ),
+              },
+              {
+                id: 'actions',
+                header: 'Actions',
+                render: item => (
+                  <div className="table-actions">
+                    <Button onClick={() => toggleEnabled(item)}>
+                      {item.enabled ? 'Disable' : 'Enable'}
+                    </Button>
+                  </div>
+                ),
+              },
+            ]}
+            emptyMessage="No local users have been created yet."
+            loading={loading}
+            loadingMessage="Loading Keycloak users…"
+            rowKey={item => item.id}
+            rows={users}
+          />
         </Panel>
       </section>
 
       <Panel
-        copy="This table is backed by Keycloak user records exposed through the AccioLists API. Full password reset and role-edit screens can be layered on top of the same endpoints next."
-        kicker="User inventory"
-        title={`Managed users (${users.length})`}
+        copy={authStatus?.bootstrap?.message || 'Bootstrap status has not been loaded yet.'}
+        kicker="Bootstrap status"
+        title="Realm wiring"
       >
-        <DataTable
-          columns={[
-            {
-              id: 'username',
-              header: 'Username',
-              render: item => <span className="table-primary">{item.username}</span>,
-            },
-            {
-              id: 'identity',
-              header: 'Identity',
-              render: item => (
-                <div>
-                  <div>{[item.first_name, item.last_name].filter(Boolean).join(' ') || 'No name set'}</div>
-                  <div className="table-secondary">{item.email || 'No email set'}</div>
-                </div>
-              ),
-            },
-            {
-              id: 'roles',
-              header: 'Roles',
-              render: item => (
-                <div className="hero-note-list">
-                  {(item.roles || []).length
-                    ? item.roles.map(role => (
-                        <span className="hero-note" key={role}>
-                          {role.replace('acciolists_', '')}
-                        </span>
-                      ))
-                    : <span className="table-secondary">No roles</span>}
-                </div>
-              ),
-            },
-            {
-              id: 'status',
-              header: 'Status',
-              render: item => (
-                <span className={`status-pill ${item.enabled ? 'is-ready' : 'is-idle'}`}>
-                  {item.enabled ? 'Enabled' : 'Disabled'}
-                </span>
-              ),
-            },
-            {
-              id: 'actions',
-              header: 'Actions',
-              render: item => (
-                <div className="table-actions">
-                  <Button onClick={() => toggleEnabled(item)}>
-                    {item.enabled ? 'Disable' : 'Enable'}
-                  </Button>
-                </div>
-              ),
-            },
-          ]}
-          emptyMessage="No local users have been created yet."
-          loading={loading}
-          loadingMessage="Loading Keycloak users…"
-          rowKey={item => item.id}
-          rows={users}
-        />
+        <div className="status-list">
+          <div className="status-row">
+            <span
+              className={`status-pill ${
+                authStatus?.bootstrap?.complete ? 'is-ready' : 'is-warn'
+              }`}
+            >
+              {authStatus?.bootstrap?.complete ? 'Ready' : 'Pending'}
+            </span>
+            <div>
+              <h3>OIDC realm</h3>
+              <p>{authStatus?.issuer_url || 'Issuer URL not configured yet.'}</p>
+            </div>
+          </div>
+          <div className="status-row">
+            <span className="status-pill is-idle">Roles</span>
+            <div>
+              <h3>Available application roles</h3>
+              <p>
+                {roleOptions.length
+                  ? roleOptions.map(option => option.value).join(', ')
+                  : 'No AccioLists realm roles were found yet.'}
+              </p>
+            </div>
+          </div>
+        </div>
       </Panel>
     </div>
   );

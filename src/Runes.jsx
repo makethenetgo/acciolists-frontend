@@ -270,7 +270,6 @@ export default function Runes() {
         }
         description="Create, filter, and maintain the IPs, URLs, and domains that feed every generated scroll."
         eyebrow="Rune inventory"
-        title="Keep the source set clean before you publish from it."
       >
         <div className="hero-note-list">
           <span className="hero-note">Tag-driven selection</span>

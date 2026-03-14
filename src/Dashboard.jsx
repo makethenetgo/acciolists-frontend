@@ -103,7 +103,6 @@ export default function Dashboard() {
         }
         description="Operate rune inventory, tag taxonomy, and published scroll artifacts from one surface built for fast reads and low-friction edits."
         eyebrow="AccioLists control plane"
-        title="Keep your rune inventory clean and your published scrolls stable."
       >
         <div className="hero-note-list">
           <span className="hero-note">Fresh counts from the API</span>

@@ -147,7 +147,6 @@ export default function Tags() {
         }
         description="Define the color-coded taxonomy that groups runes and decides what each published scroll materializes."
         eyebrow="Tag palette"
-        title="Treat tags like control-plane primitives, not afterthought labels."
       >
         <div className="hero-note-list">
           <span className="hero-note">Color-coded taxonomy</span>
