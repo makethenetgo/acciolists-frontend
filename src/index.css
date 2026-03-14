@@ -546,6 +546,19 @@ code {
   gap: 0.7rem;
 }
 
+.tag-selector {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.tag-selector__search {
+  width: 100%;
+}
+
+.tag-selector__create {
+  justify-self: flex-start;
+}
+
 .choice-chip {
   display: inline-flex;
   align-items: center;

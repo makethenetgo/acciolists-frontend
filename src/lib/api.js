@@ -106,6 +106,16 @@ export function getTagOptions(tags) {
   }));
 }
 
+function randomChannel() {
+  return Math.floor(96 + Math.random() * 128)
+    .toString(16)
+    .padStart(2, '0');
+}
+
+export function getRandomTagColor() {
+  return `#${randomChannel()}${randomChannel()}${randomChannel()}`;
+}
+
 export function selectTagOptions(tags, names = []) {
   const nameSet = new Set(names);
   return getTagOptions(tags).filter(option => nameSet.has(option.value));

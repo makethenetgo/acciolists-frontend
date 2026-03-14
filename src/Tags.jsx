@@ -7,17 +7,7 @@ import {
   PageHero,
   Panel,
 } from './components/ui';
-import { api, getErrorMessage } from './lib/api';
-
-function randomChannel() {
-  return Math.floor(96 + Math.random() * 128)
-    .toString(16)
-    .padStart(2, '0');
-}
-
-function getRandomTagColor() {
-  return `#${randomChannel()}${randomChannel()}${randomChannel()}`;
-}
+import { api, getErrorMessage, getRandomTagColor } from './lib/api';
 
 export default function Tags() {
   const [tags, setTags] = useState([]);
