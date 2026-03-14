@@ -26,6 +26,7 @@ function createScrollForm() {
     type: 'ip',
     includeTags: [],
     excludeTags: [],
+    includeExpired: false,
   };
 }
 
@@ -36,6 +37,7 @@ function normalizeScrolls(tags, scrolls) {
     ...scroll,
     includeTagNames: scroll.include_tags || [],
     excludeTagNames: scroll.exclude_tags || [],
+    includeExpired: Boolean(scroll.include_expired),
     includeTagDetails: (scroll.include_tags || []).map(name => tagLookup.get(name) || { name }),
     excludeTagDetails: (scroll.exclude_tags || []).map(name => tagLookup.get(name) || { name }),
   }));
@@ -143,6 +145,7 @@ export default function Scrolls() {
     const haystack = [
       scroll.name,
       typeLabel(scroll.type),
+      scroll.includeExpired ? 'includes expired' : 'active only',
       ...scroll.includeTagNames,
       ...scroll.excludeTagNames,
     ]
@@ -171,6 +174,7 @@ export default function Scrolls() {
         type: createForm.type,
         include_tags: createForm.includeTags,
         exclude_tags: createForm.excludeTags,
+        include_expired: createForm.includeExpired,
       });
       setCreateForm(createScrollForm());
       setFlashItems([
@@ -201,6 +205,7 @@ export default function Scrolls() {
       type: scroll.type,
       includeTags: scroll.includeTagNames,
       excludeTags: scroll.excludeTagNames,
+      includeExpired: scroll.includeExpired,
     });
   };
 
@@ -220,6 +225,7 @@ export default function Scrolls() {
         type: editForm.type,
         include_tags: editForm.includeTags,
         exclude_tags: editForm.excludeTags,
+        include_expired: editForm.includeExpired,
       });
       setFlashItems([
         {
@@ -357,6 +363,25 @@ export default function Scrolls() {
               />
             </Field>
 
+            <Field
+              hint="Leave this off to publish only active runes. Turn it on when this scroll should retain already expired entries."
+              label="Expiration policy"
+            >
+              <label className="checkbox-row">
+                <input
+                  checked={createForm.includeExpired}
+                  onChange={event =>
+                    setCreateForm(current => ({
+                      ...current,
+                      includeExpired: event.target.checked,
+                    }))
+                  }
+                  type="checkbox"
+                />
+                <span>Include expired runes</span>
+              </label>
+            </Field>
+
             <div className="panel-footer">
               <Button onClick={createScroll} variant="primary">
                 Create scroll
@@ -429,6 +454,15 @@ export default function Scrolls() {
                   emptyLabel="No exclude tags"
                   tags={item.excludeTagDetails}
                 />
+              ),
+            },
+            {
+              id: 'expirationPolicy',
+              header: 'Expiration',
+              render: item => (
+                <span className="table-mono">
+                  {item.includeExpired ? 'Includes expired' : 'Active only'}
+                </span>
               ),
             },
             {
@@ -529,6 +563,25 @@ export default function Scrolls() {
               searchPlaceholder="Search exclude tags or create one"
               selectedValues={editForm.excludeTags}
             />
+          </Field>
+
+          <Field
+            hint="Leave this off to keep the artifact limited to active runes."
+            label="Expiration policy"
+          >
+            <label className="checkbox-row">
+              <input
+                checked={editForm.includeExpired}
+                onChange={event =>
+                  setEditForm(current => ({
+                    ...current,
+                    includeExpired: event.target.checked,
+                  }))
+                }
+                type="checkbox"
+              />
+              <span>Include expired runes</span>
+            </label>
           </Field>
         </div>
       </Modal>
