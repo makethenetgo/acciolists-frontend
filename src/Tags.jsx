@@ -9,6 +9,16 @@ import {
 } from './components/ui';
 import { api, getErrorMessage } from './lib/api';
 
+function randomChannel() {
+  return Math.floor(96 + Math.random() * 128)
+    .toString(16)
+    .padStart(2, '0');
+}
+
+function getRandomTagColor() {
+  return `#${randomChannel()}${randomChannel()}${randomChannel()}`;
+}
+
 export default function Tags() {
   const [tags, setTags] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -175,6 +185,12 @@ export default function Tags() {
 
             <Field label="Color">
               <div className="color-field">
+                <Button
+                  className="color-field__random"
+                  onClick={() => setCreateColor(getRandomTagColor())}
+                >
+                  Random
+                </Button>
                 <input
                   className="color-field__picker"
                   onChange={event => setCreateColor(event.target.value)}
@@ -247,6 +263,17 @@ export default function Tags() {
               header: 'Adjust',
               render: item => (
                 <div className="color-field">
+                  <Button
+                    className="color-field__random"
+                    onClick={() =>
+                      setTagColors(current => ({
+                        ...current,
+                        [item._id]: getRandomTagColor(),
+                      }))
+                    }
+                  >
+                    Random
+                  </Button>
                   <input
                     className="color-field__picker"
                     onChange={event =>
