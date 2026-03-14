@@ -803,6 +803,12 @@ code {
   background: rgba(255, 255, 255, 0.06);
 }
 
+.color-field__random {
+  padding: 0.45rem 0.75rem;
+  min-height: 2.2rem;
+  font-size: 0.8rem;
+}
+
 .color-chip__swatch {
   width: 0.95rem;
   height: 0.95rem;
