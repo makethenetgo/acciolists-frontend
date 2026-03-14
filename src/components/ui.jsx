@@ -46,7 +46,7 @@ export function PageHero({ eyebrow, title, description, actions, children }) {
     <section className="page-hero">
       <div className="page-hero__copy">
         {eyebrow ? <p className="eyebrow">{eyebrow}</p> : null}
-        <h1>{title}</h1>
+        {title ? <h1>{title}</h1> : null}
         {description ? <p className="page-hero__lede">{description}</p> : null}
         {children ? <div className="page-hero__support">{children}</div> : null}
       </div>

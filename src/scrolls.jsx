@@ -225,9 +225,8 @@ export default function Scrolls() {
         }
         description="Assemble durable published artifacts from tag rules, keep the edge path readable, and maintain the exact include and exclude contract."
         eyebrow="Scroll publication"
-        title="Materialize the lists you want users to reach even when the backend is stressed."
       >
-        <div className="hero-note-list">
+        <div className="hero-note-list hero-note-list--stacked">
           <span className="hero-note">Artifact-first publication</span>
           <span className="hero-note">Include and exclude tag control</span>
         </div>
