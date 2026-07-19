@@ -4,6 +4,7 @@ import {
   DataTable,
   Field,
   FlashMessages,
+  Modal,
   PageHero,
   Panel,
   TagSelector,
@@ -20,6 +21,12 @@ const defaultCreateForm = {
   enabled: true,
   emailVerified: false,
   roles: ['acciolists_viewer'],
+};
+
+const defaultManageForm = {
+  roles: [],
+  password: '',
+  temporaryPassword: true,
 };
 
 function filterRoleOptions(roles) {
@@ -42,8 +49,10 @@ export default function Users() {
   const [saving, setSaving] = useState(false);
   const [flashItems, setFlashItems] = useState([]);
   const [createForm, setCreateForm] = useState(defaultCreateForm);
+  const [managedUser, setManagedUser] = useState(null);
+  const [manageForm, setManageForm] = useState(defaultManageForm);
 
-  const loadUsers = async () => {
+  const loadUsers = async (options = {}) => {
     setLoading(true);
 
     try {
@@ -56,7 +65,9 @@ export default function Users() {
       setAuthStatus(statusResponse.data);
       setRoleOptions(filterRoleOptions(rolesResponse.data || []));
       setUsers(usersResponse.data || []);
-      setFlashItems([]);
+      if (options.clearFlash !== false) {
+        setFlashItems([]);
+      }
     } catch (error) {
       setFlashItems([
         {
@@ -141,7 +152,7 @@ export default function Users() {
           content: `Created the "${username}" Keycloak user.`,
         },
       ]);
-      await loadUsers();
+      await loadUsers({ clearFlash: false });
     } catch (error) {
       setFlashItems([
         {
@@ -169,7 +180,7 @@ export default function Users() {
           content: `${user.username} is now ${user.enabled ? 'disabled' : 'enabled'}.`,
         },
       ]);
-      await loadUsers();
+      await loadUsers({ clearFlash: false });
     } catch (error) {
       setFlashItems([
         {
@@ -182,6 +193,109 @@ export default function Users() {
     }
   };
 
+  const openManageUser = user => {
+    setManagedUser(user);
+    setManageForm({
+      ...defaultManageForm,
+      roles: user.roles || [],
+    });
+  };
+
+  const closeManageUser = () => {
+    setManagedUser(null);
+    setManageForm(defaultManageForm);
+  };
+
+  const toggleManagedRole = value => {
+    setManageForm(current => {
+      const selected = new Set(current.roles);
+      if (selected.has(value)) {
+        selected.delete(value);
+      } else {
+        selected.add(value);
+      }
+
+      return {
+        ...current,
+        roles: Array.from(selected),
+      };
+    });
+  };
+
+  const saveManagedUser = async () => {
+    if (!managedUser) {
+      return;
+    }
+
+    if (manageForm.password && manageForm.password.length < 8) {
+      setFlashItems([
+        {
+          id: `users-password-short-${managedUser.id}`,
+          type: 'warning',
+          header: 'Password too short',
+          content: 'Leave the password blank or enter at least 8 characters.',
+        },
+      ]);
+      return;
+    }
+
+    const currentRoles = [...(managedUser.roles || [])].sort();
+    const nextRoles = [...manageForm.roles].sort();
+    const rolesChanged = JSON.stringify(currentRoles) !== JSON.stringify(nextRoles);
+
+    if (!rolesChanged && !manageForm.password) {
+      closeManageUser();
+      return;
+    }
+
+    setSaving(true);
+
+    try {
+      const updates = [];
+      if (rolesChanged) {
+        updates.push(
+          api.put(`/api/auth/users/${managedUser.id}/roles`, {
+            roles: manageForm.roles,
+          })
+        );
+      }
+      if (manageForm.password) {
+        updates.push(
+          api.put(`/api/auth/users/${managedUser.id}/password`, {
+            password: manageForm.password,
+            temporaryPassword: manageForm.temporaryPassword,
+          })
+        );
+      }
+
+      await Promise.all(updates);
+      await loadUsers({ clearFlash: false });
+      setFlashItems([
+        {
+          id: `users-manage-${managedUser.id}`,
+          type: 'success',
+          header: 'User access updated',
+          content: `Saved access changes for "${managedUser.username}".`,
+        },
+      ]);
+      closeManageUser();
+    } catch (error) {
+      setFlashItems([
+        {
+          id: `users-manage-error-${managedUser.id}`,
+          type: 'error',
+          header: 'User access update failed',
+          content: getErrorMessage(
+            error,
+            `Access changes for "${managedUser.username}" could not be saved.`
+          ),
+        },
+      ]);
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <div className="page-stack">
       <PageHero
@@ -190,8 +304,9 @@ export default function Users() {
             Refresh users
           </Button>
         }
-        description="Provision local Keycloak users from the same control-plane surface as the rest of the app. This first pass uses the AccioLists API as the management broker."
-        eyebrow="Identity control"
+        description="Create accounts, assign application roles, and reset local passwords."
+        eyebrow="Identity"
+        title="Users"
       >
         <div className="hero-note-list">
           <span className="hero-note">
@@ -206,11 +321,10 @@ export default function Users() {
 
       <FlashMessages items={flashItems} />
 
-      <section className="page-grid page-grid--two">
+      <section className="page-grid page-grid--identity">
         <Panel
-          copy="New users are created directly in Keycloak. Choose one or more realm roles and decide whether the first password should be temporary."
-          kicker="Create user"
-          title="Add a local account"
+          kicker="Create"
+          title="New user"
         >
           <div className="form-grid">
             <Field label="Username">
@@ -302,8 +416,7 @@ export default function Users() {
         </Panel>
 
         <Panel
-          copy="This table is backed by Keycloak user records exposed through the AccioLists API. Full password reset and role-edit screens can be layered on top of the same endpoints next."
-          kicker="User inventory"
+          kicker="Directory"
           title={`Managed users (${users.length})`}
         >
           <DataTable
@@ -355,6 +468,7 @@ export default function Users() {
                     <Button onClick={() => toggleEnabled(item)}>
                       {item.enabled ? 'Disable' : 'Enable'}
                     </Button>
+                    <Button onClick={() => openManageUser(item)}>Manage</Button>
                   </div>
                 ),
               },
@@ -400,6 +514,58 @@ export default function Users() {
           </div>
         </div>
       </Panel>
+
+      <Modal
+        actions={
+          <>
+            <Button onClick={closeManageUser}>Cancel</Button>
+            <Button loading={saving} onClick={saveManagedUser} variant="primary">
+              Save access
+            </Button>
+          </>
+        }
+        kicker="User access"
+        onClose={closeManageUser}
+        open={Boolean(managedUser)}
+        title={managedUser ? managedUser.username : 'Manage user'}
+      >
+        <div className="form-grid">
+          <Field label="Roles">
+            <TagSelector
+              onToggle={toggleManagedRole}
+              options={roleOptions}
+              selectedValues={manageForm.roles}
+            />
+          </Field>
+
+          <Field hint="Leave blank to keep the current password." label="New password">
+            <input
+              className="control-input"
+              onChange={event =>
+                setManageForm(current => ({ ...current, password: event.target.value }))
+              }
+              placeholder="At least 8 characters"
+              type="password"
+              value={manageForm.password}
+            />
+          </Field>
+
+          <label className="checkbox-row">
+            <input
+              checked={manageForm.temporaryPassword}
+              disabled={!manageForm.password}
+              onChange={event =>
+                setManageForm(current => ({
+                  ...current,
+                  temporaryPassword: event.target.checked,
+                }))
+              }
+              type="checkbox"
+            />
+            <span>Require password change at next sign-in</span>
+          </label>
+        </div>
+      </Modal>
     </div>
   );
 }

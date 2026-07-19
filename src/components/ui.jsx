@@ -1,4 +1,4 @@
-import React, { useEffect, useId, useState } from 'react';
+import React, { cloneElement, isValidElement, useEffect, useId, useRef, useState } from 'react';
 
 function joinClasses(...values) {
   return values.filter(Boolean).join(' ');
@@ -74,12 +74,36 @@ export function Panel({ kicker, title, copy, actions, className, children }) {
 }
 
 export function Field({ label, hint, children }) {
+  const inputId = useId();
+  const labelId = `${inputId}-label`;
+  const hintId = `${inputId}-hint`;
+  const isNativeControl =
+    isValidElement(children) &&
+    typeof children.type === 'string' &&
+    ['input', 'select', 'textarea'].includes(children.type);
+  const control = isNativeControl
+    ? cloneElement(children, {
+        id: children.props.id || inputId,
+        'aria-describedby': hint ? hintId : children.props['aria-describedby'],
+      })
+    : (
+      <div aria-describedby={hint ? hintId : undefined} aria-labelledby={labelId} role="group">
+        {children}
+      </div>
+    );
+
   return (
-    <label className="form-field">
-      <span className="form-field__label">{label}</span>
-      {children}
-      {hint ? <span className="form-field__hint">{hint}</span> : null}
-    </label>
+    <div className="form-field">
+      <label
+        className="form-field__label"
+        htmlFor={isNativeControl ? children.props.id || inputId : undefined}
+        id={labelId}
+      >
+        {label}
+      </label>
+      {control}
+      {hint ? <span className="form-field__hint" id={hintId}>{hint}</span> : null}
+    </div>
   );
 }
 
@@ -270,6 +294,7 @@ export function DataTable({
 
 export function Modal({ actions, children, kicker, onClose, open, title }) {
   const titleId = useId();
+  const closeButtonRef = useRef(null);
 
   useEffect(() => {
     if (!open) {
@@ -284,10 +309,13 @@ export function Modal({ actions, children, kicker, onClose, open, title }) {
 
     document.body.classList.add('acciolists-modal-open');
     window.addEventListener('keydown', handleKeyDown);
+    const previouslyFocused = document.activeElement;
+    closeButtonRef.current?.focus();
 
     return () => {
       document.body.classList.remove('acciolists-modal-open');
       window.removeEventListener('keydown', handleKeyDown);
+      previouslyFocused?.focus?.();
     };
   }, [onClose, open]);
 
@@ -318,6 +346,7 @@ export function Modal({ actions, children, kicker, onClose, open, title }) {
             aria-label="Close dialog"
             className="app-modal__close"
             onClick={onClose}
+            ref={closeButtonRef}
             type="button"
           >
             Close

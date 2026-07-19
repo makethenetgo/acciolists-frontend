@@ -66,7 +66,7 @@ export default function Runes() {
 
   const tagOptions = getTagOptions(tags);
 
-  const loadRunes = async () => {
+  const loadRunes = async (options = {}) => {
     setLoading(true);
 
     try {
@@ -86,7 +86,9 @@ export default function Runes() {
           { type: 'domain', data: domainResponse.data || [] },
         ])
       );
-      setFlashItems([]);
+      if (options.clearFlash !== false) {
+        setFlashItems([]);
+      }
     } catch (error) {
       setFlashItems([
         {
@@ -214,7 +216,7 @@ export default function Runes() {
           content: `Added "${createForm.name.trim()}" to the ${typeLabel(createForm.type)} inventory.`,
         },
       ]);
-      await loadRunes();
+      await loadRunes({ clearFlash: false });
     } catch (error) {
       setFlashItems([
         {
@@ -275,7 +277,7 @@ export default function Runes() {
         },
       ]);
       closeEditModal();
-      await loadRunes();
+      await loadRunes({ clearFlash: false });
     } catch (error) {
       setFlashItems([
         {
@@ -289,6 +291,10 @@ export default function Runes() {
   };
 
   const deleteRune = async rune => {
+    if (!window.confirm(`Delete "${rune.name}" from the rune inventory?`)) {
+      return;
+    }
+
     try {
       await api.delete(`/api/runes/${rune.type}/${rune._id}`);
       setFlashItems([
@@ -299,7 +305,7 @@ export default function Runes() {
           content: `Removed "${rune.name}" from the inventory.`,
         },
       ]);
-      await loadRunes();
+      await loadRunes({ clearFlash: false });
     } catch (error) {
       setFlashItems([
         {
@@ -320,22 +326,17 @@ export default function Runes() {
             Refresh inventory
           </Button>
         }
-        description="Create, filter, and maintain the IPs, URLs, and domains that feed every generated scroll."
-        eyebrow="Rune inventory"
-      >
-        <div className="hero-note-list">
-          <span className="hero-note">Tag-driven selection</span>
-          <span className="hero-note">Expiration-aware maintenance</span>
-        </div>
-      </PageHero>
+        description="Create, filter, and maintain the IPs, URLs, and domains used by scrolls."
+        eyebrow="Inventory"
+        title="Runes"
+      />
 
       <FlashMessages items={flashItems} />
 
       <section className="page-grid page-grid--two">
         <Panel
-          copy="Create a new rune and attach the tags that should make it eligible for later scroll generation."
-          kicker="Create rune"
-          title="Add inventory"
+          kicker="Create"
+          title="New rune"
         >
           <div className="form-grid">
             <Field label="Rune value">
@@ -425,9 +426,8 @@ export default function Runes() {
         </Panel>
 
         <Panel
-          copy="Use search and type filters together to keep edits tight when the inventory grows."
-          kicker="Filter inventory"
-          title="Cut through the noise"
+          kicker="View"
+          title="Filters"
         >
           <div className="form-grid">
             <Field label="Search">
@@ -474,8 +474,7 @@ export default function Runes() {
       </section>
 
       <Panel
-        copy="Direct edits happen inline through the API. Use tags to shape eligibility and expiration to phase out stale entries."
-        kicker="Inventory table"
+        kicker="Inventory"
         title={`Runes (${filteredRunes.length})`}
       >
         <DataTable
