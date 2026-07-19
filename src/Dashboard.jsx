@@ -101,14 +101,10 @@ export default function Dashboard() {
             Refresh workspace
           </Button>
         }
-        description="Operate rune inventory, tag taxonomy, and published scroll artifacts from one surface built for fast reads and low-friction edits."
-        eyebrow="AccioLists control plane"
-      >
-        <div className="hero-note-list">
-          <span className="hero-note">Fresh counts from the API</span>
-          <span className="hero-note">Published artifacts stay available at the edge</span>
-        </div>
-      </PageHero>
+        description="Current inventory, publication, and service status."
+        eyebrow="Workspace"
+        title="Overview"
+      />
 
       <FlashMessages items={flashItems} />
 
@@ -122,11 +118,10 @@ export default function Dashboard() {
         ))}
       </section>
 
-      <section className="page-grid page-grid--three">
+      <section className="page-grid page-grid--two">
         <Panel
-          copy="High-level status of the parts that matter when you are validating the local cluster or a new deploy."
-          kicker="Posture"
-          title="Platform readout"
+          kicker="Status"
+          title="Platform"
         >
           <div className="status-list">
             <div className="status-row">
@@ -164,9 +159,8 @@ export default function Dashboard() {
         </Panel>
 
         <Panel
-          copy="Jump to the areas you are most likely to use while learning or debugging the app."
-          kicker="Quick paths"
-          title="Common next moves"
+          kicker="Shortcuts"
+          title="Common tasks"
         >
           <div className="action-stack">
             <Link className="inline-action" to="/runes">
@@ -181,19 +175,6 @@ export default function Dashboard() {
             <a className="inline-action" href="/api/docs" rel="noreferrer" target="_blank">
               Browse API docs
             </a>
-          </div>
-        </Panel>
-
-        <Panel
-          copy="The scroll endpoint should keep serving the last generated artifact even when the API has a bad day."
-          kicker="Artifact contract"
-          title="Publication model"
-        >
-          <div className="artifact-box">
-            <p className="artifact-box__label">Published path</p>
-            <code>/scrolls/&lt;scroll-name&gt;</code>
-          </div>
-          <div className="action-stack">
             {firstScrollName ? (
               <a
                 className="inline-action"
@@ -201,11 +182,9 @@ export default function Dashboard() {
                 rel="noreferrer"
                 target="_blank"
               >
-                Open latest known scroll
+                Open a published scroll
               </a>
-            ) : (
-              <p className="empty-inline">Create a scroll to publish an artifact link here.</p>
-            )}
+            ) : null}
           </div>
         </Panel>
       </section>

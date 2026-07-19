@@ -59,7 +59,7 @@ export default function Scrolls() {
 
   const tagOptions = getTagOptions(tags);
 
-  const loadScrolls = async () => {
+  const loadScrolls = async (options = {}) => {
     setLoading(true);
 
     try {
@@ -71,7 +71,9 @@ export default function Scrolls() {
       const tagsData = tagsResponse.data || [];
       setTags(tagsData);
       setScrolls(normalizeScrolls(tagsData, scrollsResponse.data || []));
-      setFlashItems([]);
+      if (options.clearFlash !== false) {
+        setFlashItems([]);
+      }
     } catch (error) {
       setFlashItems([
         {
@@ -185,7 +187,7 @@ export default function Scrolls() {
           content: `Created the "${createForm.name.trim()}" scroll.`,
         },
       ]);
-      await loadScrolls();
+      await loadScrolls({ clearFlash: false });
     } catch (error) {
       setFlashItems([
         {
@@ -236,7 +238,7 @@ export default function Scrolls() {
         },
       ]);
       closeEditModal();
-      await loadScrolls();
+      await loadScrolls({ clearFlash: false });
     } catch (error) {
       setFlashItems([
         {
@@ -250,6 +252,10 @@ export default function Scrolls() {
   };
 
   const deleteScroll = async scroll => {
+    if (!window.confirm(`Delete "${scroll.name}" and remove its next published artifact?`)) {
+      return;
+    }
+
     try {
       await api.delete(`/api/scrolls/${scroll._id}`);
       setFlashItems([
@@ -260,7 +266,7 @@ export default function Scrolls() {
           content: `Removed "${scroll.name}" from the published set.`,
         },
       ]);
-      await loadScrolls();
+      await loadScrolls({ clearFlash: false });
     } catch (error) {
       setFlashItems([
         {
@@ -281,22 +287,17 @@ export default function Scrolls() {
             Refresh scrolls
           </Button>
         }
-        description="Assemble durable published artifacts from tag rules, keep the edge path readable, and maintain the exact include and exclude contract."
-        eyebrow="Scroll publication"
-      >
-        <div className="hero-note-list hero-note-list--stacked">
-          <span className="hero-note">Artifact-first publication</span>
-          <span className="hero-note">Include and exclude tag control</span>
-        </div>
-      </PageHero>
+        description="Manage the tag rules that produce published artifact files."
+        eyebrow="Publication"
+        title="Scrolls"
+      />
 
       <FlashMessages items={flashItems} />
 
       <section className="page-grid page-grid--two">
         <Panel
-          copy="Each scroll selects a rune inventory, includes the tags you want, then carves out exceptions with explicit excludes."
-          kicker="Create scroll"
-          title="Define publication rules"
+          kicker="Create"
+          title="New scroll"
         >
           <div className="form-grid">
             <Field label="Scroll name">
@@ -391,9 +392,8 @@ export default function Scrolls() {
         </Panel>
 
         <Panel
-          copy="Published files should keep resolving from the web tier even if the API or database are down."
-          kicker="Artifact contract"
-          title="How scrolls are served"
+          kicker="View"
+          title="Filters"
         >
           <div className="artifact-box">
             <p className="artifact-box__label">Published path</p>
@@ -420,8 +420,7 @@ export default function Scrolls() {
       </section>
 
       <Panel
-        copy="Open the live artifact directly, or adjust the rule set in place and republish through the API."
-        kicker="Published set"
+        kicker="Published"
         title={`Scrolls (${filteredScrolls.length})`}
       >
         <DataTable

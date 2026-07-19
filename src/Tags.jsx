@@ -17,7 +17,7 @@ export default function Tags() {
   const [createColor, setCreateColor] = useState('#7df9c5');
   const [tagColors, setTagColors] = useState({});
 
-  const loadTags = async () => {
+  const loadTags = async (options = {}) => {
     setLoading(true);
 
     try {
@@ -27,7 +27,9 @@ export default function Tags() {
       setTagColors(
         Object.fromEntries(nextTags.map(tag => [tag._id, tag.color || '#7df9c5']))
       );
-      setFlashItems([]);
+      if (options.clearFlash !== false) {
+        setFlashItems([]);
+      }
     } catch (error) {
       setFlashItems([
         {
@@ -74,7 +76,7 @@ export default function Tags() {
           content: `Created the "${newTagName.trim()}" tag.`,
         },
       ]);
-      await loadTags();
+      await loadTags({ clearFlash: false });
     } catch (error) {
       setFlashItems([
         {
@@ -100,7 +102,7 @@ export default function Tags() {
           content: `Updated the "${tag.name}" color token.`,
         },
       ]);
-      await loadTags();
+      await loadTags({ clearFlash: false });
     } catch (error) {
       setFlashItems([
         {
@@ -114,6 +116,10 @@ export default function Tags() {
   };
 
   const deleteTag = async tag => {
+    if (!window.confirm(`Delete the "${tag.name}" tag?`)) {
+      return;
+    }
+
     try {
       await api.delete(`/api/tags/${tag._id}`);
       setFlashItems([
@@ -124,7 +130,7 @@ export default function Tags() {
           content: `Deleted the "${tag.name}" tag.`,
         },
       ]);
-      await loadTags();
+      await loadTags({ clearFlash: false });
     } catch (error) {
       setFlashItems([
         {
@@ -145,24 +151,15 @@ export default function Tags() {
             Refresh tags
           </Button>
         }
-        description="Define the color-coded taxonomy that groups runes and decides what each published scroll materializes."
-        eyebrow="Tag palette"
-      >
-        <div className="hero-note-list">
-          <span className="hero-note">Color-coded taxonomy</span>
-          <span className="hero-note">Shared by runes and scrolls</span>
-        </div>
-      </PageHero>
+        description="Maintain the labels shared by rune inventory and scroll rules."
+        eyebrow="Taxonomy"
+        title="Tags"
+      />
 
       <FlashMessages items={flashItems} />
 
-      <section className="page-grid page-grid--two">
-        <Panel
-          copy="Keep names short and intentional. These tags show up across rune inventory and scroll rules."
-          kicker="Create tag"
-          title="Add a new label"
-        >
-          <div className="form-grid">
+      <Panel kicker="Create" title="New tag">
+          <div className="form-grid form-grid--inline">
             <Field label="Name">
               <input
                 className="control-input"
@@ -197,35 +194,10 @@ export default function Tags() {
               </Button>
             </div>
           </div>
-        </Panel>
-
-        <Panel
-          copy="Choose colors with enough separation that scanability survives table density and modal forms."
-          kicker="Design notes"
-          title="Palette guidance"
-        >
-          <div className="status-list">
-            <div className="status-row">
-              <span className="status-pill is-ready">Readable</span>
-              <div>
-                <h3>High contrast wins</h3>
-                <p>Bright tags are easier to scan against the dark workspace than muted middle tones.</p>
-              </div>
-            </div>
-            <div className="status-row">
-              <span className="status-pill is-idle">Consistent</span>
-              <div>
-                <h3>One meaning per color</h3>
-                <p>Reusing the same color family for unrelated concepts makes rune tables harder to parse.</p>
-              </div>
-            </div>
-          </div>
-        </Panel>
-      </section>
+      </Panel>
 
       <Panel
-        copy="Adjust tag colors inline, then push the update directly through the API."
-        kicker="Palette table"
+        kicker="Taxonomy"
         title={`Tags (${tags.length})`}
       >
         <DataTable

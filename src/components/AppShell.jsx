@@ -25,15 +25,12 @@ export default function AppShell() {
 
   return (
     <div className="control-plane">
-      <div className="control-plane__glow control-plane__glow--left" aria-hidden="true" />
-      <div className="control-plane__glow control-plane__glow--right" aria-hidden="true" />
-
       <header className="site-header app-header">
         <NavLink className="site-brand app-brand" to="/">
           <span className="app-brand__mark">AL</span>
           <span className="app-brand__copy">
             <span className="app-brand__title">AccioLists</span>
-            <span className="app-brand__subtitle">Rune inventory and scroll publication</span>
+            <span className="app-brand__subtitle">Operations console</span>
           </span>
         </NavLink>
 

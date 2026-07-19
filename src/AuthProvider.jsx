@@ -17,12 +17,9 @@ import {
 
 const AuthContext = createContext(null);
 
-function AuthScreen({ error, loading, onLogin }) {
+export function AuthScreen({ error, loading, onLogin, onRetry }) {
   return (
     <div className="control-plane">
-      <div className="control-plane__glow control-plane__glow--left" aria-hidden="true" />
-      <div className="control-plane__glow control-plane__glow--right" aria-hidden="true" />
-
       <main className="auth-shell">
         <section className="auth-card">
           <p className="eyebrow">Identity</p>
@@ -33,8 +30,12 @@ function AuthScreen({ error, loading, onLogin }) {
           </p>
           {error ? <p className="auth-card__error">{error}</p> : null}
           <div className="auth-card__actions">
-            <Button loading={loading} onClick={onLogin} variant="primary">
-              Sign in
+            <Button
+              loading={loading}
+              onClick={error ? onRetry : onLogin}
+              variant="primary"
+            >
+              {error ? 'Retry connection' : 'Sign in'}
             </Button>
           </div>
         </section>
@@ -46,9 +47,6 @@ function AuthScreen({ error, loading, onLogin }) {
 function LoadingScreen({ message }) {
   return (
     <div className="control-plane">
-      <div className="control-plane__glow control-plane__glow--left" aria-hidden="true" />
-      <div className="control-plane__glow control-plane__glow--right" aria-hidden="true" />
-
       <main className="auth-shell">
         <section className="auth-card">
           <p className="eyebrow">Identity</p>
@@ -67,6 +65,7 @@ export function AuthProvider({ children }) {
   const [authSession, setAuthSession] = useState(null);
   const [status, setStatus] = useState('loading');
   const [error, setError] = useState('');
+  const [configAttempt, setConfigAttempt] = useState(0);
   const refreshPromiseRef = useRef(null);
   const authConfigRef = useRef(null);
   const authSessionRef = useRef(null);
@@ -206,7 +205,7 @@ export function AuthProvider({ children }) {
     return () => {
       cancelled = true;
     };
-  }, [location.hash, location.pathname, location.search]);
+  }, [configAttempt]);
 
   useEffect(() => {
     let cancelled = false;
@@ -309,7 +308,14 @@ export function AuthProvider({ children }) {
   }
 
   if (status !== 'authenticated') {
-    return <AuthScreen error={error} loading={status === 'loading'} onLogin={login} />;
+    return (
+      <AuthScreen
+        error={error}
+        loading={status === 'loading'}
+        onLogin={login}
+        onRetry={() => setConfigAttempt(current => current + 1)}
+      />
+    );
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
