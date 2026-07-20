@@ -172,6 +172,9 @@ export default function Dashboard() {
             <Link className="inline-action" to="/tags">
               Edit tag palette
             </Link>
+            <a className="inline-action" href="/readthedocs/" rel="noreferrer" target="_blank">
+              Browse project docs
+            </a>
             <a className="inline-action" href="/api/docs" rel="noreferrer" target="_blank">
               Browse API docs
             </a>
