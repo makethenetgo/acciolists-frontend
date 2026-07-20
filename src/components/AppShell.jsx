@@ -51,6 +51,14 @@ export default function AppShell() {
           <span className="app-user-badge">{user?.username || 'Authenticated user'}</span>
           <a
             className="site-nav-link"
+            href="/readthedocs/"
+            rel="noreferrer"
+            target="_blank"
+          >
+            Project docs
+          </a>
+          <a
+            className="site-nav-link"
             href="/api/docs"
             rel="noreferrer"
             target="_blank"
